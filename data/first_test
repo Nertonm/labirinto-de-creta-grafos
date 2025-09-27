@@ -1,0 +1,17 @@
+8       # Numero de Vértices
+10      # Numero de Arestas
+0 1 4   # Lista de Arestas
+0 2 3
+1 3 5
+2 3 2
+2 4 6
+3 5 7
+4 5 1
+4 6 5
+5 7 8
+6 7 4
+0       # Vértice de entrada
+7       # Vértice de saída: diferente do de entrada
+3       # Posição inicial do Minotauro: qualquer diferente da entrada e saída
+6       # Parâmetro de percepção do Minotauro: valor de distância máxima p(G) para que ele detecte o intruso
+25      # Tempo máximo τ (G) de duração do alimento levado com o entrante
