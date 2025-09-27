@@ -1,0 +1,30 @@
+// include/labirinto/Grafo.h
+
+#pragma once // Diretiva padrão para evitar que o header seja incluído múltiplas vezes
+
+#include <vector>
+#include <unordered_map>
+#include <utility> // Para std::pair
+#include <fstream> // Para std::ifstream
+
+class Grafo {
+public:
+    // Construtor que inicializa o grafo a partir de um arquivo
+    Grafo();
+    // Destrutor 
+    ~Grafo();
+
+    // Método para adicionar uma aresta ao grafo
+    void adicionar_aresta(int u, int v, int peso);
+    void set_saida(int vertice_saida);
+    int get_saida() const;
+        
+    const std::vector<std::pair<int, int>>& get_vizinhos(int vertice) const;
+    std::vector<int> calcular_caminho_minimo(int origem, int destino) const;
+
+private:
+    std::unordered_map<int, std::vector<std::pair<int, int>>> adjacencias;
+    int vertice_saida;
+    int num_vertices;
+    int num_arestas;
+};
