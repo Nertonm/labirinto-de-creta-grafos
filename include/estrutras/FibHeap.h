@@ -57,25 +57,25 @@ void FibHeap<T>::inserir(const T& valor){
 
 // Junta um heap a este. Custo: O(1)
 template <typename T>
-void FibHeap<T>::unir(FibHeap& otherHeap) {
-    if (otherHeap.minNo == nullptr) return;
+void FibHeap<T>::unir(FibHeap& outroHeap) {
+    if (outroHeap.minNo == nullptr) return;
     if (minNo == nullptr) {
-        minNo = otherHeap.minNo;
-        numNos = otherHeap.numNos;
+        minNo = outroHeap.minNo;
+        numNos = outroHeap.numNos;
         return;
     }
 
     // Concatena as duas listas de raízes
-    minNo->direita->esquerda = otherHeap.minNo->esquerda;
-    otherHeap.minNo->esquerda->direita = minNo->direita;
-    minNo->direita = otherHeap.minNo;
-    otherHeap.minNo->esquerda = minNo;
+    minNo->direita->esquerda = outroHeap.minNo->esquerda;
+    outroHeap.minNo->esquerda->direita = minNo->direita;
+    minNo->direita = outroHeap.minNo;
+    outroHeap.minNo->esquerda = minNo;
 
     // Atualiza o mínimo
-    if (otherHeap.minNo->chave < minNo->chave) {
-        minNo = otherHeap.minNo;
+    if (outroHeap.minNo->chave < minNo->chave) {
+        minNo = outroHeap.minNo;
     }
-    numNos += otherHeap.numNos;
+    numNos += outroHeap.numNos;
 }
 
 // Custo Amortizado: O(log n)
@@ -86,7 +86,7 @@ T FibHeap<T>::extrairMin() {
         throw std::runtime_error("Heap está vazio");
     }
 
-    T minValue = z->chave;
+    T minValor = z->chave;
 
     // Promove os filhos de minNo para a lista de raízes
     if (z->filho != nullptr) {
@@ -116,7 +116,7 @@ T FibHeap<T>::extrairMin() {
     }
     numNos--;
     delete z;
-    return minValue;
+    return minValor;
 }
 
 // Função auxiliar para juntar árvores de mesmo grau
@@ -145,8 +145,8 @@ void FibHeap<T>::linkar(FibNo<T>* y, FibNo<T>* x) {
 // Processo de reorganização
 template <typename T>
 void FibHeap<T>::consolidar() {
-    int maxDegree = static_cast<int>(floor(log(numNos) / log(1.618)));
-    std::vector<FibNo<T>*> TabelaGraus(maxDegree + 2, nullptr);
+    int grauMax = static_cast<int>(floor(log(numNos) / log(1.618)));
+    std::vector<FibNo<T>*> TabelaGraus(grauMax + 2, nullptr);
 
     std::vector<FibNo<T>*> raizes;
     FibNo<T>* atual = minNo;
@@ -171,7 +171,7 @@ void FibHeap<T>::consolidar() {
     }
 
     minNo = nullptr;
-    for (int i = 0; i < TabelaGraus.size(); ++i) {
+    for (size_t i = 0; i < TabelaGraus.size(); ++i) {
         if (TabelaGraus[i] != nullptr) {
             adicionarListaRaiz(TabelaGraus[i]);
             if (minNo == nullptr || TabelaGraus[i]->chave < minNo->chave) {
