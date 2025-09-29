@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
 
     try {
         Simulador simulation(file);
-        //simulation.run();
+        simulation.testa_movimento_prisioneiro();
     } catch (const std::exception& e) {
         std::cerr << "Erro: " << e.what() << std::endl;
         return 1;
