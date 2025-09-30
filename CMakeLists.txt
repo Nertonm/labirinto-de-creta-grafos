@@ -11,7 +11,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 add_library(labirinto_lib
     src/Grafo.cpp
     src/Prisioneiro.cpp
-    src/Minotauro.cpp
     src/Simulador.cpp
 )
 
