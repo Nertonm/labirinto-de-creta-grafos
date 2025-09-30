@@ -1,7 +1,36 @@
+#include "labirinto/Prisioneiro.h"
+#include "estruturas/MinhaListaAdj.h"
+#include "estruturas/MeuPair.h"
 #include "labirinto/Simulador.h"
 #include <string>
 #include <sstream> // Essencial para o std::stringstream
 #include <iostream>
+
+void Simulador::testa_movimento_prisioneiro() {
+    int tempo_restante = tempo_maximo_comida;
+   
+    Prisioneiro p(vertice_entrada, tempo_maximo_comida);
+
+    while (tempo_restante > 0 && p.get_posicao_atual() != vertice_saida) {
+        // Obtenha os vizinhos do vértice atual
+        auto vizinhos = labirinto.get_vizinhos(p.get_posicao_atual());
+        MinhaListaAdj<MeuPair<int, int>> lista_vizinhos;
+        for (const auto& par : vizinhos) {
+            lista_vizinhos.inserir_no_fim(MeuPair<int, int>(par.first, par.second));
+        }
+
+        // Teste o movimento
+        p.mover(lista_vizinhos, tempo_restante);
+
+        std::cout << "Nova posição do prisioneiro: " << p.get_posicao_atual() << std::endl;
+        std::cout << "Caminho percorrido: ";
+        for (int v : p.get_caminho_percorrido()) {
+            std::cout << v << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "Tempo restante: " << tempo_restante << std::endl;
+    }
+}
 
 Simulador::Simulador(std::ifstream& arquivo_entrada) {
     std::string linha;
