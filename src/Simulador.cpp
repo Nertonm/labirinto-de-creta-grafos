@@ -78,7 +78,7 @@ void Simulador::run(unsigned int seed, int chance_de_sobrevivencia) {
     std::string motivo_fim;
     bool fim_de_jogo = false;
     bool minotauro_vivo = false;
-    // bool minotauro_vivo = ture;
+    // bool minotauro_vivo = true;
 
 
     Prisioneiro p(vEntr, tmpMax);
