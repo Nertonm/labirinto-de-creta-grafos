@@ -4,6 +4,9 @@
 
 #include <vector>
 #include <unordered_map>
+
+#include "estruturas/MinhaListaAdj.h"
+#include "estruturas/MeuPair.h"
 #include <utility> // Para std::pair
 #include <fstream> // Para std::ifstream
 
@@ -16,15 +19,15 @@ public:
 
     // Método para adicionar uma aresta ao grafo
     void adicionar_aresta(int u, int v, int peso);
-    void set_saida(int vertice_saida);
+    void set_saida(int vSaida);
     int get_saida() const;
-        
-    const std::vector<std::pair<int, int>>& get_vizinhos(int vertice) const;
+
+    const listaAdj<MeuPair<int, int>>& get_vizinhos(int vertice) const;
     std::vector<int> calcular_caminho_minimo(int origem, int destino) const;
 
 private:
-    std::unordered_map<int, std::vector<std::pair<int, int>>> adjacencias;
-    int vertice_saida;
-    int num_vertices;
-    int num_arestas;
+    std::unordered_map<int, listaAdj<MeuPair<int, int>>> adjacencias;
+    int vSaida;
+    int nV;
+    int nA;
 };

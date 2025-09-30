@@ -2,7 +2,7 @@
 #define MINHA_LISTA_H
 
 template <typename T>
-class MinhaListaAdj {
+class listaAdj {
 public:
 struct No{
     T dado;
@@ -16,9 +16,13 @@ private:
     No* cauda;
     int tamanho;
 public:
-    MinhaListaAdj() : cabeca(nullptr), cauda(nullptr), tamanho(0) {}
+    listaAdj() : cabeca(nullptr), cauda(nullptr), tamanho(0) {}
+
+    // Proíbe cópia para evitar duplo free
+    listaAdj(const listaAdj&) = delete;
+    listaAdj& operator=(const listaAdj&) = delete;
     
-    ~MinhaListaAdj() {
+    ~listaAdj() {
         No* atual = cabeca;
         while (atual) {
             No* proximo = atual->prox;

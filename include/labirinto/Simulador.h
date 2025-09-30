@@ -2,24 +2,28 @@
 #include "Grafo.h"
 #include "Prisioneiro.h"
 #include "Minotauro.h"
+#include <random>
 
 class Simulador {
 public:
     // O construtor recebe uma referência para o fluxo do arquivo já aberto
     Simulador(std::ifstream& arquivo_entrada);
 
-    // Testa o movimento do prisioneiro
-    void testa_movimento_prisioneiro();
+    void run(unsigned int seed, int chance_de_sobrevivencia);
+    bool prisioneiro_morreu_ou_viveu(unsigned int seed, int chance_de_sobrevivencia, std::mt19937& gerador);
 
 private:
     Grafo labirinto;
     // Minotauro cadelao;
 
-    // Atributos para guardar os parâmetros lidos
 public:
-    int vertice_entrada;
-    int vertice_saida;
-    int pos_inicial_minotauro;
+    int vEntr;
+    int vSaid;
+    int posIniM;
     int percepcao_minotauro;
-    int tempo_maximo_comida;
+    int tmpMax;
+
+    double tempo_global;
+    double prxMovP;
+    double prxMovM;
 };
