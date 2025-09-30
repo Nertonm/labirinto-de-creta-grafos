@@ -160,7 +160,7 @@ void Simulador::run(unsigned int seed, int chance_de_sobrevivencia) {
 }
 
 bool Simulador::prisioneiro_morreu_ou_viveu(unsigned int seed, int chance_de_sobrevivencia, std::mt19937& gerador) {
-    std::uniform_real_distribution<double> distribuidor(1, 100);
+    std::uniform_int_distribution<int> distribuidor(1, 100);
     int numero_sorteado = distribuidor(gerador);
     return numero_sorteado <= chance_de_sobrevivencia;
 }
