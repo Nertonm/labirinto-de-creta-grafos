@@ -2,9 +2,9 @@
 
 #include <vector>
 #include <unordered_set>
-#include "estrutras/MinhaListaAdj.h"
-#include "estrutras/MeuPair.h"
-#include "estrutras/MinhaPilha.h"
+#include "estruturas/MinhaListaAdj.h"
+#include "estruturas/MeuPair.h"
+#include "estruturas/MinhaPilha.h"
 
 // Declaração antecipada da classe Grafo para evitar inclusão circular
 class Grafo;
