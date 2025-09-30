@@ -1,10 +1,9 @@
 #pragma once
 
 #include <vector>
-#include <unordered_set>
 #include "estruturas/MinhaListaAdj.h"
 #include "estruturas/MeuPair.h"
-#include "estruturas/MinhaPilha.h"
+#include "estruturas/Novelo.h"
 
 // Declaração antecipada da classe Grafo para evitar inclusão circular
 class Grafo;
@@ -12,20 +11,20 @@ class Grafo;
 class Prisioneiro {
 public:
     // Construtor que inicializa o prisioneiro com sua posição inicial e o tempo máximo sem comida
-    Prisioneiro(int posicao_inicial, int tempo_maximo_comida);
+    Prisioneiro(int posInicial, int supDias);
     
     // Destrutor
     ~Prisioneiro();
 
     // Método para mover o prisioneiro para um novo vértice
-    void mover(const MinhaListaAdj<MeuPair<int, int>>& vizinhos,  int& tempo_restante);
-    
-    int get_posicao_atual() const;
-    const std::vector<int>& get_caminho_percorrido() const;
+    void mover(const listaAdj<MeuPair<int, int>>& vizinhos,  int& tempo_restante);
+
+    int getPosAtual() const;
+    const std::vector<int>& getCaminho() const;
 
 private:
-    int posicao_atual; // Vértice atual do prisioneiro
-    MinhaPilha<MeuPair<int, int>> novelo_de_la; // Simula o fio de lã para o backtracking
-    std::vector<int> caminho_percorrido; // Histórico dos vértices visitados
+    int posAtual; // Vértice atual do prisioneiro
+    Novelo<MeuPair<int, int>> novelo; // Simula o fio de lã para o backtracking
+    std::vector<int> caminho; // Histórico dos vértices visitados
     std::vector<bool> visitados; // Marca os vértices já visitados
 };
