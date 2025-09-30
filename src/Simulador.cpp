@@ -15,8 +15,7 @@ Simulador::Simulador(std::ifstream& arquivo_entrada) {
     // Lê a primeira linha: número de vértices
     if (std::getline(arquivo_entrada, linha)) {
         std::stringstream ss(linha);
-        ss >> nV
-;
+        ss >> nV;
     } else {
         throw std::runtime_error("Erro ao ler o número de vértices.");
     }
