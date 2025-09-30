@@ -1,6 +1,6 @@
 #include "labirinto/Prisioneiro.h"
-#include "estrutras/MinhaListaAdj.h"
-#include "estrutras/MeuPair.h"
+#include "estruturas/MinhaListaAdj.h"
+#include "estruturas/MeuPair.h"
 #include "labirinto/Simulador.h"
 #include <string>
 #include <sstream> // Essencial para o std::stringstream
