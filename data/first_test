@@ -14,4 +14,4 @@
 7       # Vértice de saída: diferente do de entrada
 3       # Posição inicial do Minotauro: qualquer diferente da entrada e saída
 6       # Parâmetro de percepção do Minotauro: valor de distância máxima p(G) para que ele detecte o intruso
-25      # Tempo máximo τ (G) de duração do alimento levado com o entrante
+20      # Tempo máximo τ (G) de duração do alimento levado com o entrante
