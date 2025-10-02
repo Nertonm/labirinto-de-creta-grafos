@@ -10,6 +10,7 @@ public:
     void lembrarCaminhos();
     int lembrarProxPasso(int atual, int dest);
     int lembrarDist(int atual, int dest);
+    void mover(int prxVertice);
 
 private:
     int pos;
