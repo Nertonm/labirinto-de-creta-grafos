@@ -21,7 +21,7 @@ const std::vector<int>& Prisioneiro::getCaminho() const {
     return caminho;
 }
 
-void Prisioneiro::mover(const listaAdj<MeuPair<int, int>>& vizinhos,  int& tempo_restante) {
+void Prisioneiro::mover(const listaAdj<MeuPair<int, int>>& vizinhos) {
     auto no_vizinho = vizinhos.get_cabeca();
 
     // Procura um caminho (vizinho) que ainda não foi visitado
@@ -34,8 +34,8 @@ void Prisioneiro::mover(const listaAdj<MeuPair<int, int>>& vizinhos,  int& tempo
             novelo.criarRastro({pos, peso_aresta});
             pos = proximo_vertice;
             visitados[pos] = true;
-            tempo_restante -= peso_aresta; // Reduz o tempo restante pelo peso da aresta
             caminho.push_back(pos);
+            kitsDeComida -= peso_aresta; // Consome kits de comida
             return;
         }
         no_vizinho = no_vizinho->prox;
@@ -47,7 +47,7 @@ void Prisioneiro::mover(const listaAdj<MeuPair<int, int>>& vizinhos,  int& tempo
         int vertice_volta = par.primeiro;
         pos = vertice_volta;
         caminho.push_back(pos);
-        tempo_restante -= par.segundo; // Reduz o tempo restante pelo peso da aresta
+        kitsDeComida -= par.segundo; // Consome kits de comida
     }
 }
 
