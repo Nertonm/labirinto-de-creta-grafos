@@ -25,6 +25,7 @@ public:
 
     int getPos() const;
     const std::vector<int>& getCaminho() const;
+    int getKitsDeComida() const;
 
 private:
     int pos; // Vértice atual do prisioneiro
