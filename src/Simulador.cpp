@@ -62,7 +62,7 @@ Simulador::Simulador(std::ifstream& arquivo_entrada) {
 
     // Lê Tempo máximo
     std::getline(arquivo_entrada, linha);
-    std::stringstream(linha) >> tmpMax;
+    std::stringstream(linha) >> kitsDeComida;
 
     std::cout << "Simulador iniciado com sucesso!" << std::endl;
 }
@@ -70,27 +70,32 @@ Simulador::Simulador(std::ifstream& arquivo_entrada) {
 
 void Simulador::run(unsigned int seed, int chance_de_sobrevivencia) {
     tempo_global = 0;
+
+    // Inicializa os tempos dos próximos movimentos
     prxMovP = 0.0;
     prxMovM = 0.0;
 
+    // Inicializa o gerador de números aleatórios com a seed fornecida
     std::mt19937 gerador(seed);
     
     std::string motivo_fim;
+
     bool fim_de_jogo = false;
-    bool minotauro_vivo = false;
-    // bool minotauro_vivo = true;
+    bool minotauro_vivo = true;
+    
 
+    Prisioneiro p(vEntr, kitsDeComida);
+    Minotauro m(posIniM, percepcao_minotauro, labirinto, labirinto.getNumVertices());
+    m.lembrarCaminhos();
 
-    Prisioneiro p(vEntr, tmpMax);
-    // Minotauro minotauro(pos_inicial_minotauro, percepcao_minotauro, labirinto);
 
     while (!fim_de_jogo){
-        std::cout << "[Dia: " << tempo_global << "] Prisioneiro está na sala " << p.getPosAtual() 
+        std::cout << "[Dia: " << tempo_global << "] Prisioneiro está na sala " << p.getPos() 
         << std::endl;
 
         if (prxMovP <= prxMovM || !minotauro_vivo) {
-            int pos_antiga = p.getPosAtual();
-            const auto& vizinhos = labirinto.get_vizinhos(p.getPosAtual());
+            int pos_antiga = p.getPos();
+            const auto& vizinhos = labirinto.get_vizinhos(p.getPos());
 
             std::cout << "Vizinhos: ";
             listaAdj<MeuPair<int, int>>::No* no_vizinho = vizinhos.get_cabeca();
@@ -101,8 +106,8 @@ void Simulador::run(unsigned int seed, int chance_de_sobrevivencia) {
             }
             std::cout << std::endl;
 
-            p.mover(vizinhos, tmpMax);
-            int pos_nova = p.getPosAtual();
+            p.mover(vizinhos);
+            int pos_nova = p.getPos();
             std::cout << "Prisioneiro moveu de " << pos_antiga << " para " << pos_nova << std::endl;
 
             int peso_aresta = 0;
@@ -120,22 +125,78 @@ void Simulador::run(unsigned int seed, int chance_de_sobrevivencia) {
             tempo_global += peso_aresta;
             prxMovP = tempo_global + peso_aresta;
 
-            std::cout << "[" << tempo_global << "s] Prisioneiro moveu-se para " << pos_nova << 
+            std::cout << "[" << tempo_global << "] Prisioneiro moveu-se para " << pos_nova << 
             ". Próximo movimento em " << prxMovP << "s." << std::endl;
         } else {
-            // Movimento do minotauro
+            static std::vector<int> historicoMinotauro;
+            int pos_antiga = m.getPos();
+            int proximoVertice;
+            int distancia = -1;
+            if (pos_antiga >= 0 && pos_antiga < labirinto.getNumVertices() && p.getPos() >= 0 && p.getPos() < labirinto.getNumVertices()) {
+                distancia = m.lembrarDist(pos_antiga, p.getPos());
+            }
+            if (historicoMinotauro.empty() || historicoMinotauro.back() != pos_antiga) {
+                historicoMinotauro.push_back(pos_antiga);
+            }
+            if (distancia != -1 && distancia <= percepcao_minotauro) {
+                // Persegue o prisioneiro pelo menor caminho
+                int prox = -1;
+                if (pos_antiga >= 0 && pos_antiga < labirinto.getNumVertices() && p.getPos() >= 0 && p.getPos() < labirinto.getNumVertices()) {
+                    prox = m.lembrarProxPasso(pos_antiga, p.getPos());
+                }
+                proximoVertice = (prox != -1) ? prox : pos_antiga;
+            } else {
+                // Move aleatoriamente para um vizinho
+                const auto& vizinhos = labirinto.get_vizinhos(pos_antiga);
+                std::vector<int> opcoes;
+                for (auto no = vizinhos.get_cabeca(); no != nullptr; no = no->prox) {
+                    opcoes.push_back(no->dado.primeiro);
+                }
+                if (!opcoes.empty()) {
+                    std::uniform_int_distribution<size_t> dist(0, opcoes.size() - 1);
+                    proximoVertice = opcoes[dist(gerador)];
+                } else if (historicoMinotauro.size() > 1) {
+                    // Backtracking: volta ao vértice anterior
+                    historicoMinotauro.pop_back();
+                    if (!historicoMinotauro.empty()) {
+                        proximoVertice = historicoMinotauro.back();
+                    } else {
+                        proximoVertice = pos_antiga;
+                    }
+                } else {
+                    proximoVertice = pos_antiga; // Não tem para onde voltar
+                }
+            }
+            m.mover(proximoVertice);
+            int pos_nova = m.getPos();
+            int peso_aresta = 0;
+            const auto& vizinhos_minotauro = labirinto.get_vizinhos(pos_antiga);
+            listaAdj<MeuPair<int, int>>::No* no_vizinho_minotauro = vizinhos_minotauro.get_cabeca();
+            while (no_vizinho_minotauro) {
+                const MeuPair<int, int>& vizinho = no_vizinho_minotauro->dado;
+                if (vizinho.primeiro == pos_nova) {
+                    peso_aresta = vizinho.segundo;
+                    break;
+                }
+                no_vizinho_minotauro = no_vizinho_minotauro->prox;
+            }
+            prxMovM = tempo_global + peso_aresta;
+            std::cout << "[" << tempo_global << "] Minotauro moveu-se para " << pos_nova << 
+            ". Próximo movimento em " << prxMovM << "s." << std::endl;
         }
-        if (tempo_global > tmpMax) {
-            motivo_fim += "O prisioneiro morreu de fome no dia " + std::to_string(tempo_global) + 
-            " tentando alcançar a sala " + std::to_string(prxMovP) + ".";
+        if (kitsDeComida < 0) {
+            int pos_nova = p.getPos();
+            motivo_fim += "O prisioneiro morreu de fome no dia " + std::to_string(tempo_global) +
+                " tentando alcançar a sala " + std::to_string(pos_nova) + ".";
             fim_de_jogo = true;
+            continue;
         }
-        if (p.getPosAtual() == vSaid) {
+        if (p.getPos() == vSaid) {
             motivo_fim += "O prisioneiro escapou com sucesso!";
             fim_de_jogo = true;
+            continue;
         }
-        //if (prisioneiro.getPosAtual() == minotauro.getPosAtual() && minotauro_vivo) {
-        if (p.getPosAtual() == 1000){
+        if (p.getPos() == m.getPos() && minotauro_vivo) {
             motivo_fim = "Prisioneiro foi pego pelo Minotauro.";
             if (prisioneiro_morreu_ou_viveu(seed, chance_de_sobrevivencia, gerador)) {
                 motivo_fim += " Mas incrivelmente, o prisioneiro derrotou o Minotauro!";

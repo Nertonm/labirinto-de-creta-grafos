@@ -2,24 +2,26 @@
 #include <iostream>
 #include "estruturas/Novelo.h"
 
-Prisioneiro::Prisioneiro(int salaInicial, int numSalas) {
-    posAtual = salaInicial;
-    visitados.resize(numSalas, false);
 
-    visitados[posAtual] = true;
-    caminho.push_back(posAtual);
-    novelo.criarRastro({posAtual, 0});
+Prisioneiro::Prisioneiro(int salaInicial, int kitsDeComida) {
+    pos = salaInicial;
+    this->kitsDeComida = kitsDeComida;
+    visitados.resize(TamanhoDoNovelo::tamanhoNovelo, false);
+    visitados[pos] = true;
+
+    caminho.push_back(pos);
+    novelo.criarRastro({pos, 0});
 }
 
-int Prisioneiro::getPosAtual() const {
-    return posAtual;
+int Prisioneiro::getPos() const {
+    return pos;
 }
 
 const std::vector<int>& Prisioneiro::getCaminho() const {
     return caminho;
 }
 
-void Prisioneiro::mover(const listaAdj<MeuPair<int, int>>& vizinhos,  int& tempo_restante) {
+void Prisioneiro::mover(const listaAdj<MeuPair<int, int>>& vizinhos) {
     auto no_vizinho = vizinhos.get_cabeca();
 
     // Procura um caminho (vizinho) que ainda não foi visitado
@@ -29,15 +31,11 @@ void Prisioneiro::mover(const listaAdj<MeuPair<int, int>>& vizinhos,  int& tempo
         int peso_aresta = no_vizinho->dado.segundo;
 
         if (!visitados[proximo_vertice]) {
-            novelo.criarRastro({posAtual, peso_aresta});
-
-            tempo_restante -= peso_aresta;
-            posAtual = proximo_vertice;
-
-            visitados[posAtual] = true;
-
-            caminho.push_back(posAtual);
-
+            novelo.criarRastro({pos, peso_aresta});
+            pos = proximo_vertice;
+            visitados[pos] = true;
+            caminho.push_back(pos);
+            kitsDeComida -= peso_aresta; // Consome kits de comida
             return;
         }
         no_vizinho = no_vizinho->prox;
@@ -46,13 +44,10 @@ void Prisioneiro::mover(const listaAdj<MeuPair<int, int>>& vizinhos,  int& tempo
     if (!novelo.nenhumRastro()) {
         MeuPair<int, int> par = novelo.topo();
         novelo.puxarRastro();
-
         int vertice_volta = par.primeiro;
-        int custo_retorno = par.segundo;
-
-        tempo_restante -= custo_retorno;
-        posAtual = vertice_volta;
-        caminho.push_back(posAtual);
+        pos = vertice_volta;
+        caminho.push_back(pos);
+        kitsDeComida -= par.segundo; // Consome kits de comida
     }
 }
 

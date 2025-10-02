@@ -12,6 +12,7 @@ add_library(labirinto_lib
     src/Grafo.cpp
     src/Prisioneiro.cpp
     src/Simulador.cpp
+    src/Minotauro.cpp
 )
 
 target_include_directories(labirinto_lib PUBLIC 

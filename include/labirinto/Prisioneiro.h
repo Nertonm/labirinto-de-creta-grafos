@@ -10,6 +10,10 @@ class Grafo;
 
 class Prisioneiro {
 public:
+    struct TamanhoDoNovelo {
+    static const int tamanhoNovelo = 1000;
+    };
+
     // Construtor que inicializa o prisioneiro com sua posição inicial e o tempo máximo sem comida
     Prisioneiro(int posInicial, int supDias);
     
@@ -17,13 +21,15 @@ public:
     ~Prisioneiro();
 
     // Método para mover o prisioneiro para um novo vértice
-    void mover(const listaAdj<MeuPair<int, int>>& vizinhos,  int& tempo_restante);
+    void mover(const listaAdj<MeuPair<int, int>>& vizinhos);
 
-    int getPosAtual() const;
+    int getPos() const;
     const std::vector<int>& getCaminho() const;
+    int getKitsDeComida() const;
 
 private:
-    int posAtual; // Vértice atual do prisioneiro
+    int pos; // Vértice atual do prisioneiro
+    int kitsDeComida; // Número de kits de comida disponíveis
     Novelo<MeuPair<int, int>> novelo; // Simula o fio de lã para o backtracking
     std::vector<int> caminho; // Histórico dos vértices visitados
     std::vector<bool> visitados; // Marca os vértices já visitados

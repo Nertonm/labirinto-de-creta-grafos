@@ -21,7 +21,8 @@ public:
     int vSaid;
     int posIniM;
     int percepcao_minotauro;
-    int tmpMax;
+
+    int kitsDeComida;
 
     double tempo_global;
     double prxMovP;

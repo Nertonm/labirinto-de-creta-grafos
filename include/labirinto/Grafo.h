@@ -12,6 +12,7 @@
 
 class Grafo {
 public:
+    int getNumVertices() const { return nV; }
     // Construtor que inicializa o grafo a partir de um arquivo
     Grafo();
     // Destrutor 
@@ -23,7 +24,7 @@ public:
     int get_saida() const;
 
     const listaAdj<MeuPair<int, int>>& get_vizinhos(int vertice) const;
-    std::vector<int> calcular_caminho_minimo(int origem, int destino) const;
+    std::vector<int> minCaminhosCalc(int origem, int destino) const;
 
 private:
     std::unordered_map<int, listaAdj<MeuPair<int, int>>> adjacencias;
