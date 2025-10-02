@@ -1,6 +1,7 @@
 #include "labirinto/Minotauro.h"
 #include "labirinto/Grafo.h"
 #include <limits> 
+#include <iostream>
 
 const int INF = std::numeric_limits<int>::max();
 
@@ -44,10 +45,22 @@ void Minotauro::lembrarCaminhos() {
 }
 
 int Minotauro::lembrarProxPasso(int atual, int dest){
+    if (atual < 0 || dest < 0 || atual >= memoriaNumeroDeSalas || dest >= memoriaNumeroDeSalas) {
+        std::cerr << "[ERRO] lembrarProxPasso: Indice fora do limite: atual=" << atual << ", dest=" << dest << std::endl;
+        return -1;
+    }
     return memoriaCaminho[atual][dest];
 }
 
 int Minotauro::lembrarDist(int atual, int dest){
+    if (atual < 0 || dest < 0 || atual >= memoriaNumeroDeSalas || dest >= memoriaNumeroDeSalas) {
+        std::cerr << "[ERRO] lembrarDist: Indice fora do limite: atual=" << atual << ", dest=" << dest << std::endl;
+        return -1;
+    }
     return memoriaDistancias[atual][dest];
 }
 
+// Move o Minotauro para o próximo vértice informado
+void Minotauro::mover(int prxVertice) {
+    pos = prxVertice;
+}
