@@ -29,7 +29,9 @@ int main(int argc, char* argv[]) {
     }
 
     try {
-        Simulador simulation(file);
+        Simulador simulation;
+        simulation.carregarArquivo(nomeArquivo);
+        simulation.imprimirInicioSimulacao();
         simulation.run(1, 1);
     } catch (const std::exception& e) {
         std::cerr << "Erro: " << e.what() << std::endl;

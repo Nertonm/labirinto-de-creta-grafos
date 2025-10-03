@@ -26,6 +26,19 @@ int Grafo::get_saida() const {
     return vSaida;
 }
 
+int Grafo::getPesoAresta(int u, int v) const {
+    auto it = adjacencias.find(u);
+    if (it != adjacencias.end()) {
+        const auto& lista = it->second;
+        for (auto no = lista.get_cabeca(); no != nullptr; no = no->prox) {
+            if (no->dado.primeiro == v) {
+                return no->dado.segundo; // Retorna o peso da aresta
+            }
+        }
+    }
+    return -1; // Retorna -1 se a aresta não existir
+}
+
 const listaAdj<MeuPair<int, int>>& Grafo::get_vizinhos(int vertice) const {
     static const listaAdj<MeuPair<int, int>> vazia;
     auto it = adjacencias.find(vertice);

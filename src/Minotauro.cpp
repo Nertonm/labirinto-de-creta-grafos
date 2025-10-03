@@ -49,7 +49,9 @@ int Minotauro::lembrarProxPasso(int atual, int dest){
         std::cerr << "[ERRO] lembrarProxPasso: Indice fora do limite: atual=" << atual << ", dest=" << dest << std::endl;
         return -1;
     }
-    return memoriaCaminho[atual][dest];
+    int prox = memoriaCaminho[atual][dest];
+    std::clog << "[DEBUG] Minotauro::lembrarProxPasso: atual=" << atual << ", dest=" << dest << ", prox=" << prox << std::endl;
+    return prox;
 }
 
 int Minotauro::lembrarDist(int atual, int dest){
@@ -57,10 +59,17 @@ int Minotauro::lembrarDist(int atual, int dest){
         std::cerr << "[ERRO] lembrarDist: Indice fora do limite: atual=" << atual << ", dest=" << dest << std::endl;
         return -1;
     }
-    return memoriaDistancias[atual][dest];
+    int dist = memoriaDistancias[atual][dest];
+    std::clog << "[DEBUG] Minotauro::lembrarDist: atual=" << atual << ", dest=" << dest << ", dist=" << dist << std::endl;
+    return dist;
+}
+
+int Minotauro::getPercepcao() const {
+    return percepcao;
 }
 
 // Move o Minotauro para o próximo vértice informado
 void Minotauro::mover(int prxVertice) {
+    std::clog << "[DEBUG] Minotauro::mover: de " << pos << " para " << prxVertice << std::endl;
     pos = prxVertice;
 }

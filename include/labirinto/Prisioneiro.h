@@ -21,11 +21,12 @@ public:
     ~Prisioneiro();
 
     // Método para mover o prisioneiro para um novo vértice
-    void mover(const listaAdj<MeuPair<int, int>>& vizinhos);
+    int mover(const listaAdj<MeuPair<int, int>>& vizinhos);
 
     int getPos() const;
     const std::vector<int>& getCaminho() const;
     int getKitsDeComida() const;
+    bool foiVisitado(int vertice) const; // Método público adicionado
 
 private:
     int pos; // Vértice atual do prisioneiro

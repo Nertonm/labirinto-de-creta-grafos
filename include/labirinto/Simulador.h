@@ -6,25 +6,49 @@
 
 class Simulador {
 public:
-    // O construtor recebe uma referência para o fluxo do arquivo já aberto
-    Simulador(std::ifstream& arquivo_entrada);
+    Simulador();
 
-    void run(unsigned int seed, int chance_de_sobrevivencia);
-    bool prisioneiro_morreu_ou_viveu(unsigned int seed, int chance_de_sobrevivencia, std::mt19937& gerador);
+    bool carregarArquivo(const std::string& nome_arquivo);
+
+    // Estrutura para encapsular os resultados da simulação
+    struct ResultadoSimulacao{
+        bool prisioneiroSobreviveu;
+        int diasSobrevividos;
+        std::vector<int> caminhoP;
+        std::vector<int> caminhoM;
+        std::string motivoFim;
+        int kitsRestantes;
+        int posFinalP;
+        int posFinalM;
+        bool minotauroVivo;
+    };
+
+    ResultadoSimulacao run(unsigned int seed, int chanceBatalha);
+    void imprimirInicioSimulacao();
+
 
 private:
-    Grafo labirinto;
-    // Minotauro cadelao;
+    bool prisioneiroBatalha(unsigned int seed, int chanceBatalha, std::mt19937& gerador);
+    void turnoPrisioneiro(Prisioneiro& p);
+    void turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& gerador);
+    void verificaEstados(Prisioneiro& p, Minotauro& m, bool& fimDeJogo, bool& minotauroVivo, std::string& motivoFim, unsigned int seed, int chanceBatalha, std::mt19937& gerador);
 
-public:
+    void imprimirEstadoAtual(int tempoGlobal, const Prisioneiro& p, const Minotauro& m);
+    void imprimirFimSimulacao(const std::string& motivoFim, const Prisioneiro& p, const Minotauro& m);
+
+    Grafo labirinto;
+    
+    int nA;
+    int nV;
     int vEntr;
     int vSaid;
     int posIniM;
-    int percepcao_minotauro;
+    int percepcaoMinotauro;
 
     int kitsDeComida;
 
-    double tempo_global;
+    // Estados da simulação
+    double tempoGlobal;
     double prxMovP;
     double prxMovM;
 };

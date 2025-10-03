@@ -13,6 +13,8 @@
 class Grafo {
 public:
     int getNumVertices() const { return nV; }
+    void setNumVertices(int n) { nV = n; }
+    void setNumArestas(int n) { nA = n; }
     // Construtor que inicializa o grafo a partir de um arquivo
     Grafo();
     // Destrutor 
@@ -22,6 +24,7 @@ public:
     void adicionar_aresta(int u, int v, int peso);
     void set_saida(int vSaida);
     int get_saida() const;
+    int getPesoAresta(int u, int v) const;
 
     const listaAdj<MeuPair<int, int>>& get_vizinhos(int vertice) const;
     std::vector<int> minCaminhosCalc(int origem, int destino) const;
