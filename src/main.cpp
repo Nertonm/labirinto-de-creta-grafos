@@ -11,6 +11,7 @@ struct ConfiguracaoSimulacao {
 };
 
 int main(int argc, char* argv[]) {
+    std::clog << "[TESTE] std::clog está funcionando!" << std::endl;
 
     if (argc < 2) {
         std::cerr << "Uso: " << argv[0] << " <arquivo>" << std::endl;

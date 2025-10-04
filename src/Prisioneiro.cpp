@@ -1,12 +1,13 @@
+
 #include "labirinto/Prisioneiro.h"
 #include "labirinto/Prisioneiro.h"
+#include <iostream>
+#include "estruturas/Novelo.h"
+#include <iomanip>
 
 bool Prisioneiro::foiVisitado(int vertice) const {
     return vertice >= 0 && vertice < (int)visitados.size() ? visitados[vertice] : false;
 }
-#include <iostream>
-#include "estruturas/Novelo.h"
-
 
 Prisioneiro::Prisioneiro(int salaInicial, int kitsDeComida) {
     pos = salaInicial;
@@ -22,6 +23,20 @@ int Prisioneiro::getPos() const {
     return pos;
 }
 
+void Prisioneiro::registrarAcontecimento(const std::string& tipo, const std::string& descricao, int posicao, int tempo) {
+    HistoricoPrisioneiro h{tipo, descricao, posicao, tempo};
+    historico.push_back(h);
+}
+
+void Prisioneiro::imprimirHistorico() const {
+    std::cout << "\n--- Histórico do Prisioneiro ---\n";
+    for (const auto& h : historico) {
+        std::cout << "Tipo: " << h.tipo << " | Descrição: " << h.descricao
+                  << " | Posição: " << h.posicao << " | Tempo: " << h.tempo << std::endl;
+    }
+    std::cout << "-------------------------------\n";
+}
+
 const std::vector<int>& Prisioneiro::getCaminho() const {
     return caminho;
 }
@@ -31,32 +46,9 @@ int Prisioneiro::mover(const listaAdj<MeuPair<int, int>>& vizinhos) {
 
     if (kitsDeComida <= 0) {
         std::cout << "[DEBUG] Prisioneiro não pode se mover, kits de comida esgotados!\n";
+        registrarAcontecimento("FIM", "Kits de comida esgotados", pos, 0);
         return 0;
     }
-
-    // Debug: mostrar vizinhos e visitados
-    std::clog << "\n[DEBUG] TURNO DO PRISIONEIRO" << std::endl;
-    std::clog << "  - Sala atual: " << pos << std::endl;
-    std::clog << "  - Kits de comida restantes: " << kitsDeComida << std::endl;
-    std::clog << "  - Caminho até agora: ";
-    for (int v : caminho) std::clog << v << " ";
-    std::clog << std::endl;
-    std::clog << "  - Vizinhos da sala " << pos << ": ";
-    if (&vizinhos == nullptr) {
-        std::cout << "[ERRO] Ponteiro de vizinhos é nulo para sala " << pos << std::endl;
-        return 0;
-    }
-    std::cout << "[DEBUG] Vizinhos da sala " << pos << ": ";
-    auto no_vizinho_dbg = vizinhos.get_cabeca();
-    if (no_vizinho_dbg == nullptr) {
-        std::clog << "Nenhum vizinho encontrado." << std::endl;
-    }
-    while (no_vizinho_dbg != nullptr) {
-        int v = no_vizinho_dbg->dado.primeiro;
-        std::clog << v << "(peso: " << no_vizinho_dbg->dado.segundo << ", visitado: " << (foiVisitado(v) ? "sim" : "não") << ") ";
-        no_vizinho_dbg = no_vizinho_dbg->prox;
-    }
-    std::clog << std::endl;
 
     // Procura um caminho (vizinho) que ainda não foi visitado
     while (no_vizinho != nullptr)
@@ -67,6 +59,7 @@ int Prisioneiro::mover(const listaAdj<MeuPair<int, int>>& vizinhos) {
         if (!foiVisitado(proximo_vertice)) {
             if (kitsDeComida < peso_aresta) {
                 std::clog << "  - Não pode mover para " << proximo_vertice << " (peso: " << peso_aresta << ", kits restantes: " << kitsDeComida << ") - Motivo: kits insuficientes." << std::endl;
+                registrarAcontecimento("FALHA", "Kits insuficientes para mover", proximo_vertice, peso_aresta);
                 no_vizinho = no_vizinho->prox;
                 continue;
             }
@@ -76,27 +69,13 @@ int Prisioneiro::mover(const listaAdj<MeuPair<int, int>>& vizinhos) {
             caminho.push_back(pos);
             kitsDeComida -= peso_aresta; // Consome kits de comida
             std::clog << "  - Escolha: mover para " << pos << " (peso: " << peso_aresta << ", kits restantes: " << kitsDeComida << ") - Motivo: sala não visitada e kits suficientes." << std::endl;
+            registrarAcontecimento("MOVIMENTO", "Moveu para nova sala", pos, peso_aresta);
             return peso_aresta;
         }
         no_vizinho = no_vizinho->prox;
     }
-    // Se todos os vizinhos já foram visitados, faz backtracking
-    if (!novelo.nenhumRastro()) {
-        MeuPair<int, int> par = novelo.topo();
-        if (kitsDeComida < par.segundo) {
-            std::clog << "  - Não pode fazer backtracking para " << par.primeiro << " (peso: " << par.segundo << ", kits restantes: " << kitsDeComida << ") - Motivo: kits insuficientes." << std::endl;
-            return 0;
-        }
-        novelo.puxarRastro();
-        int vertice_volta = par.primeiro;
-        pos = vertice_volta;
-        caminho.push_back(pos);
-        kitsDeComida -= par.segundo; // Consome kits de comida
-        std::clog << "  - Escolha: backtracking para " << pos << " (peso: " << par.segundo << ", kits restantes: " << kitsDeComida << ") - Motivo: todos vizinhos visitados, rastro disponível e kits suficientes." << std::endl;
-        return par.segundo; 
-    }
-    std::clog << "  - Prisioneiro está engasgado, sem vizinhos e sem rastro!" << std::endl;
-    return 0;
+    int peso_volta = voltarAtras();
+    return peso_volta;
 }
 
 
@@ -105,4 +84,25 @@ int Prisioneiro::getKitsDeComida() const {
 }
 
 Prisioneiro::~Prisioneiro() {
+}
+
+int Prisioneiro::voltarAtras(){
+    // Se todos os vizinhos já foram visitados, faz backtracking
+    if (!novelo.nenhumRastro()) {
+        MeuPair<int, int> rastroAnterior = novelo.topo();
+        if (kitsDeComida < rastroAnterior.segundo) {
+            std::clog << "  - Não pode fazer backtracking para " << rastroAnterior.primeiro << " (peso: " << rastroAnterior.segundo << ", kits restantes: " << kitsDeComida << ") - Motivo: kits insuficientes." << std::endl;
+            return 0;
+        }
+    novelo.puxarRastro();
+    int vertice_volta = rastroAnterior.primeiro;
+    pos = vertice_volta;
+    caminho.push_back(pos);
+    kitsDeComida -= rastroAnterior.segundo; // Consome kits de comida
+    std::clog << "  - Escolha: backtracking para " << pos << " (peso: " << rastroAnterior.segundo << ", kits restantes: " << kitsDeComida << ") - Motivo: todos vizinhos visitados, rastro disponível e kits suficientes." << std::endl;
+    registrarAcontecimento("BACKTRACK", "Voltou para sala anterior", pos, rastroAnterior.segundo);
+    return rastroAnterior.segundo;
+    }
+    std::clog << "  - Prisioneiro está engasgado, sem vizinhos e sem rastro!" << std::endl;
+    return 0;
 }

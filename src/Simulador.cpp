@@ -217,69 +217,45 @@ void Simulador::imprimirInicioSimulacao() {
     std::cout << "\n" << BRONZE << BOLD << "Que os deuses guiem seus passos. A simulação começou!" << RESET << std::endl;
 }
 
+/**
+ * @brief Executa o loop principal da simulação.
+ * @details A lógica de tempo foi refatorada para um sistema de eventos discreto.
+ * O loop avança o tempo para o próximo evento agendado (movimento de um
+ * agente), garantindo uma progressão de tempo consistente e correta.
+ */
 Simulador::ResultadoSimulacao Simulador::run(unsigned int seed, int chanceBatalha) {
     // Inicializa o relogio global    
     tempoGlobal = 0.0;
-
-    // Inicializa os tempos dos próximos movimentos
-    prxMovP = 0.0;
-    prxMovM = 0.0;
-
     // Inicializa o gerador de números aleatórios com a seed fornecida
     std::mt19937 gerador(seed);
 
-    // Cria o prisioneiro e o minotauro
+    // Inicializa os agentes
     Prisioneiro p(vEntr, kitsDeComida);
     Minotauro m(posIniM, percepcaoMinotauro, labirinto, labirinto.getNumVertices());
 
     // Minotauro lembra os caminhos mínimos entre todos os pares de vértices
     m.lembrarCaminhos();
 
-    // Estrutura para armazenar o resultado da simulação
+    // Inicializa os tempos dos próximos movimentos
+    prxMovP = 0.0; 
+    prxMovM = 0.0;
 
+    // Estrutura para armazenar o resultado da simulação
     Simulador::ResultadoSimulacao resultado;
     bool fimDeJogo = false;
     bool minotauroVivo = true;
     std::string motivoFim;
-
-    // Silence unused parameter warning
-    (void)chanceBatalha;
-
     std::vector<EventoMovimento> eventos;
+
     while (!fimDeJogo){
+        // Decide quem se move primeiro com base no próximo tempo de movimento
         if (prxMovP <= prxMovM && p.getKitsDeComida() > 0) {
-            int pos_antiga = p.getPos();
-            const auto& vizinhos = labirinto.get_vizinhos(pos_antiga);
+            // Turno do Prisioneiro
             tempoGlobal = prxMovP;
-            // Descobre próximo movimento
-            int destino = -1;
-            int peso = 0;
-            auto no_vizinho = vizinhos.get_cabeca();
-            while (no_vizinho != nullptr) {
-                int proximo_vertice = no_vizinho->dado.primeiro;
-                int peso_aresta = no_vizinho->dado.segundo;
-                if (!p.foiVisitado(proximo_vertice) && p.getKitsDeComida() >= peso_aresta) {
-                    destino = proximo_vertice;
-                    peso = peso_aresta;
-                    break;
-                }
-                no_vizinho = no_vizinho->prox;
-            }
-            if (destino == -1) {
-                fimDeJogo = true;
-                continue;
-            }
-            EventoMovimento ev;
-            ev.tempoInicio = tempoGlobal;
-            ev.tempoFim = tempoGlobal + peso;
-            ev.agente = "Prisioneiro";
-            ev.origem = pos_antiga;
-            ev.destino = destino;
-            ev.peso = peso;
-            eventos.push_back(ev);
-            tempoGlobal += peso;
-            prxMovP = tempoGlobal;
-            p.mover(vizinhos); // Atualiza posição, kits, etc
+
+            // Get vizinhos da posição atual
+            const auto& vizinhos = labirinto.get_vizinhos(p.getPos());
+            int custoMovimento = p.mover(vizinhos);
         }
         else if (minotauroVivo)
         {
@@ -306,9 +282,10 @@ Simulador::ResultadoSimulacao Simulador::run(unsigned int seed, int chanceBatalh
         }
         verificaEstados(p,m,fimDeJogo,minotauroVivo,motivoFim, seed, chanceBatalha, gerador);
     }
-        std::cout << "[DEBUG] Loop principal da simulação finalizado. Nenhum movimento restante.\n" << std::endl;
-        printarLogsComProgresso(eventos);
-        return resultado;
+    std::cout << "[DEBUG] Loop principal da simulação finalizado. Nenhum movimento restante.\n" << std::endl;
+    // printarLogsComProgresso(eventos);
+    p.imprimirHistorico();
+    return resultado;
 }
 
 void Simulador::verificaEstados(Prisioneiro& p, Minotauro& m, bool& fimDeJogo, bool& minotauroVivo, std::string& motivoFim, unsigned int seed, int chanceBatalha, std::mt19937& gerador) {
