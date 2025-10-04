@@ -28,14 +28,6 @@ void Prisioneiro::registrarAcontecimento(const std::string& tipo, const std::str
     historico.push_back(h);
 }
 
-void Prisioneiro::imprimirHistorico() const {
-    std::cout << "\n--- Histórico do Prisioneiro ---\n";
-    for (const auto& h : historico) {
-        std::cout << "Tipo: " << h.tipo << " | Descrição: " << h.descricao
-                  << " | Posição: " << h.posicao << " | Tempo: " << h.tempo << std::endl;
-    }
-    std::cout << "-------------------------------\n";
-}
 
 const std::vector<int>& Prisioneiro::getCaminho() const {
     return caminho;
@@ -45,12 +37,9 @@ int Prisioneiro::mover(const listaAdj<MeuPair<int, int>>& vizinhos) {
     auto no_vizinho = vizinhos.get_cabeca();
 
     if (kitsDeComida <= 0) {
-        std::cout << "[DEBUG] Prisioneiro não pode se mover, kits de comida esgotados!\n";
-        registrarAcontecimento("FIM", "Kits de comida esgotados", pos, 0);
         return 0;
     }
 
-    // Procura um caminho (vizinho) que ainda não foi visitado
     while (no_vizinho != nullptr)
     {
         int proximo_vertice = no_vizinho->dado.primeiro;
@@ -58,8 +47,6 @@ int Prisioneiro::mover(const listaAdj<MeuPair<int, int>>& vizinhos) {
 
         if (!foiVisitado(proximo_vertice)) {
             if (kitsDeComida < peso_aresta) {
-                std::clog << "  - Não pode mover para " << proximo_vertice << " (peso: " << peso_aresta << ", kits restantes: " << kitsDeComida << ") - Motivo: kits insuficientes." << std::endl;
-                registrarAcontecimento("FALHA", "Kits insuficientes para mover", proximo_vertice, peso_aresta);
                 no_vizinho = no_vizinho->prox;
                 continue;
             }
@@ -67,13 +54,12 @@ int Prisioneiro::mover(const listaAdj<MeuPair<int, int>>& vizinhos) {
             pos = proximo_vertice;
             visitados[pos] = true;
             caminho.push_back(pos);
-            kitsDeComida -= peso_aresta; // Consome kits de comida
-            std::clog << "  - Escolha: mover para " << pos << " (peso: " << peso_aresta << ", kits restantes: " << kitsDeComida << ") - Motivo: sala não visitada e kits suficientes." << std::endl;
-            registrarAcontecimento("MOVIMENTO", "Moveu para nova sala", pos, peso_aresta);
+            kitsDeComida -= peso_aresta; 
             return peso_aresta;
         }
         no_vizinho = no_vizinho->prox;
     }
+
     int peso_volta = voltarAtras();
     return peso_volta;
 }

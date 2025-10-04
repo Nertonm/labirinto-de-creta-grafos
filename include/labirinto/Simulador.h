@@ -30,7 +30,7 @@ public:
 private:
     bool prisioneiroBatalha(unsigned int seed, int chanceBatalha, std::mt19937& gerador);
     void turnoPrisioneiro(Prisioneiro& p);
-    void turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& gerador);
+    int turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& gerador);
     void verificaEstados(Prisioneiro& p, Minotauro& m, bool& fimDeJogo, bool& minotauroVivo, std::string& motivoFim, unsigned int seed, int chanceBatalha, std::mt19937& gerador);
 
     void imprimirEstadoAtual(int tempoGlobal, const Prisioneiro& p, const Minotauro& m);

@@ -26,9 +26,6 @@ public:
 
     // Adiciona um acontecimento ao histórico
     void registrarAcontecimento(const std::string& tipo, const std::string& descricao, int posicao, int tempo);
-
-    // Imprime todos os acontecimentos do histórico
-    void imprimirHistorico() const;
     
     // Destrutor
     ~Prisioneiro();
