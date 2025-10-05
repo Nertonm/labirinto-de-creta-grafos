@@ -1,0 +1,43 @@
+name: C++ CI
+
+# Executar o fluxo de trabalho em pushes e pull requests para a branch main
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    build_and_test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v3
+
+            - name: Set up C++ environment
+              uses: actions/setup-cpp@v1
+              with:
+                  compiler: gcc
+
+            - name: Install dependencies
+              run: sudo apt-get install -y build-essential cmake
+
+            - name: Build project
+              run: |
+                  mkdir -p build
+                  cd build
+                  cmake ..
+                  make
+
+            - name: Run tests
+              run: |
+                  cd build
+                  ./bin/simulador ../data/first_test 
+            - name: Upload artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: build-artifact
+                  path: bin/
