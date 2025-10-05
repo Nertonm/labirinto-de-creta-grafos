@@ -27,26 +27,16 @@ jobs:
               uses: actions/cache@v4
               with:
                   path: build
-                  key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}
+                  key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt', 'src/**', 'include/**') }}
                   restore-keys: |
                       ${{ runner.os }}-build-
 
             - name: Configure CMake
-              if: steps.cache-build.outputs.cache-hit != 'true'
               run: |
                 mkdir -p build
                 cd build
                 cmake ..
-
-            - name: Build project
-              id: build-project
-              run: |
-                  mkdir -p build
-                  cd build
-                  cmake ..
-                  cmake --build . --parallel
-                    restore-keys: |
-                        ${{ runner.os }}-build-
+                cmake --build . --parallel
 
             - name: Run tests
               run: |
