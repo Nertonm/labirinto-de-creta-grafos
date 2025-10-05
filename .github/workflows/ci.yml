@@ -30,7 +30,7 @@ jobs:
                   mkdir -p build
                   cd build
                   cmake ..
-                  make
+                  cmake --build . --parallel
 
             - name: Run tests
               run: |
