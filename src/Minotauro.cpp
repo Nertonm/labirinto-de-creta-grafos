@@ -71,12 +71,12 @@ void Minotauro::lembrarCaminhos() {
 int Minotauro::lembrarProxPasso(int atual, int dest){
     // Verifica se os índices estão dentro dos limites
     if (atual < 0 || dest < 0 || atual >= memoriaNumeroDeSalas || dest >= memoriaNumeroDeSalas) {
-    Logger::error(0.0, "lembrarProxPasso: Indice fora do limite: atual={}, dest={}", Logger::LogSource::MINOTAURO, atual, dest);
+    Logger::error(tempoMinotauro, "lembrarProxPasso: Indice fora do limite: atual={}, dest={}", Logger::LogSource::MINOTAURO, atual, dest);
         return -1;
     }
     // Retorna o próximo vértice no caminho mínimo de 'atual' para 'dest'
     int prox = memoriaCaminho[atual][dest];
-    Logger::info(0.0, "Minotauro::lembrarProxPasso: atual={}, dest={}, prox={}", Logger::LogSource::MINOTAURO, atual, dest, prox);
+    Logger::info(tempoMinotauro, "Minotauro recorda que a Sala {} tem um caminho para a Sala {}, sendo o próximo passo: {}", Logger::LogSource::MINOTAURO, atual, dest, prox);
     return prox;
 }
 
@@ -86,12 +86,12 @@ int Minotauro::lembrarProxPasso(int atual, int dest){
 int Minotauro::lembrarDist(int atual, int dest){
     // Verifica se os índices estão dentro dos limites
     if (atual < 0 || dest < 0 || atual >= memoriaNumeroDeSalas || dest >= memoriaNumeroDeSalas) {
-    Logger::error(0.0, "lembrarDist: Indice fora do limite: atual={}, dest={}", Logger::LogSource::MINOTAURO, atual, dest);
+    Logger::error(tempoMinotauro, "lembrarDist: Indice fora do limite: atual={}, dest={}", Logger::LogSource::MINOTAURO, atual, dest);
         return -1;
     }
     // Retorna a distância mínima de 'atual' para 'dest'
     int dist = memoriaDistancias[atual][dest];
-    Logger::info(0.0, "Minotauro::lembrarDist: atual={}, dest={}, dist={}", Logger::LogSource::MINOTAURO, atual, dest, dist);
+    Logger::info(tempoMinotauro, "Minotauro na sala {} sente que o prisioneiro está na sala {}, sendo a distância até lá de {}", Logger::LogSource::MINOTAURO, atual, dest, dist);
     return dist;
 }
 
@@ -99,13 +99,13 @@ int Minotauro::lembrarDist(int atual, int dest){
  * @brief Atualiza a posição atual do Minotauro.
  */
 void Minotauro::mover(int prxVertice) {
-    Logger::info(0.0, "Minotauro::mover: de {} para {}", Logger::LogSource::MINOTAURO, pos, prxVertice);
+    // Logger::info(tempoMinotauro, "Minotauro::mover: de {} para {}", Logger::LogSource::MINOTAURO, pos, prxVertice);
     pos = prxVertice;
 }
 
 /**
  * @brief Obtém o alcance de percepção do Minotauro.
- */
+*/
 int Minotauro::getPercepcao() const {
     return percepcao;
 }
