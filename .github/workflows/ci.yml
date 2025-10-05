@@ -38,7 +38,7 @@ jobs:
                   ./bin/simulador ../data/first_test 
             - name: Upload artifact
               # v4.3.1 (latest as of June 2024)
-              uses: actions/upload-artifact@c3a1e7b2e6e2e1e6e7e1e7e1e7e1e7e1e7e1e7e1
+              uses: actions/upload-artifact@v4
               with:
                   name: build-artifact
                   path: build/bin/
