@@ -1,8 +1,8 @@
 
 #include "labirinto/Prisioneiro.h"
-#include "labirinto/Prisioneiro.h"
-#include <iostream>
+#include "utils/Logger.h"
 #include "estruturas/Novelo.h"
+#include <iostream>
 #include <iomanip>
 
 bool Prisioneiro::foiVisitado(int vertice) const {
@@ -77,7 +77,7 @@ int Prisioneiro::voltarAtras(){
     if (!novelo.nenhumRastro()) {
         MeuPair<int, int> rastroAnterior = novelo.topo();
         if (kitsDeComida < rastroAnterior.segundo) {
-            std::clog << "  - Não pode fazer backtracking para " << rastroAnterior.primeiro << " (peso: " << rastroAnterior.segundo << ", kits restantes: " << kitsDeComida << ") - Motivo: kits insuficientes." << std::endl;
+            Logger::info(0.0, "Não pode fazer backtracking para {} (peso: {}, kits restantes: {}) - Motivo: kits insuficientes.", Logger::LogSource::PRISIONEIRO, rastroAnterior.primeiro, rastroAnterior.segundo, kitsDeComida);
             return 0;
         }
     novelo.puxarRastro();
@@ -85,10 +85,10 @@ int Prisioneiro::voltarAtras(){
     pos = vertice_volta;
     caminho.push_back(pos);
     kitsDeComida -= rastroAnterior.segundo; // Consome kits de comida
-    std::clog << "  - Escolha: backtracking para " << pos << " (peso: " << rastroAnterior.segundo << ", kits restantes: " << kitsDeComida << ") - Motivo: todos vizinhos visitados, rastro disponível e kits suficientes." << std::endl;
+    Logger::info(0.0, "Escolha: backtracking para {} (peso: {}, kits restantes: {}) - Motivo: todos vizinhos visitados, rastro disponível e kits suficientes.", Logger::LogSource::PRISIONEIRO, pos, rastroAnterior.segundo, kitsDeComida);
     registrarAcontecimento("BACKTRACK", "Voltou para sala anterior", pos, rastroAnterior.segundo);
     return rastroAnterior.segundo;
     }
-    std::clog << "  - Prisioneiro está engasgado, sem vizinhos e sem rastro!" << std::endl;
+    Logger::warning(0.0, "Prisioneiro está engasgado, sem vizinhos e sem rastro!", Logger::LogSource::PRISIONEIRO);
     return 0;
 }

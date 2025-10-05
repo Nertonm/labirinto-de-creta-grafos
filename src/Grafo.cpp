@@ -1,15 +1,16 @@
 #include "labirinto/Grafo.h"
+#include "utils/Logger.h"
 #include <iostream>
 #include "estruturas/MinhaListaAdj.h"
 #include "estruturas/MeuPair.h"
 
 Grafo::Grafo() : nV(0), nA(0), vSaida(-1) {
     // O construtor é um bom lugar para inicializar os membros com valores padrão.
-    std::cout << "Objeto Grafo criado." << std::endl;
+    Logger::info(0.0, "Objeto Grafo criado.");
 }
 
 Grafo::~Grafo() {
-    std::cout << "Objeto Grafo destruído." << std::endl;
+    Logger::info(0.0, "Objeto Grafo destruído.");
 }
 
 void Grafo::adicionar_aresta(int u, int v, int peso) {

@@ -2,10 +2,21 @@
 #include "Grafo.h"
 #include "Prisioneiro.h"
 #include "Minotauro.h"
+#include "utils/Logger.h"
 #include <random>
 
 class Simulador {
 public:
+
+    // Estrutura para registrar eventos de movimento na simulação
+    struct EventoMovimento {
+        double tempoInicio;
+        double tempoFim;
+        std::string agente;
+        int origem;
+        int destino;
+        int peso;
+    };
     Simulador();
 
     bool carregarArquivo(const std::string& nome_arquivo);
@@ -42,6 +53,7 @@ private:
     int percepcaoMinotauro;
 
     bool fimDeJogo;
+    std::vector<EventoMovimento> eventos;
     ResultadoSimulacao resultado;
 
     int kitsDeComida;

@@ -9,6 +9,7 @@
  */
 
 #include "labirinto/Minotauro.h"
+#include "utils/Logger.h"
 #include "labirinto/Grafo.h"
 #include <limits> 
 #include <iostream>
@@ -70,12 +71,12 @@ void Minotauro::lembrarCaminhos() {
 int Minotauro::lembrarProxPasso(int atual, int dest){
     // Verifica se os índices estão dentro dos limites
     if (atual < 0 || dest < 0 || atual >= memoriaNumeroDeSalas || dest >= memoriaNumeroDeSalas) {
-        std::cerr << "[ERRO] lembrarProxPasso: Indice fora do limite: atual=" << atual << ", dest=" << dest << std::endl;
+    Logger::error(0.0, "lembrarProxPasso: Indice fora do limite: atual={}, dest={}", Logger::LogSource::MINOTAURO, atual, dest);
         return -1;
     }
     // Retorna o próximo vértice no caminho mínimo de 'atual' para 'dest'
     int prox = memoriaCaminho[atual][dest];
-    std::clog << "[DEBUG] Minotauro::lembrarProxPasso: atual=" << atual << ", dest=" << dest << ", prox=" << prox << std::endl;
+    Logger::info(0.0, "Minotauro::lembrarProxPasso: atual={}, dest={}, prox={}", Logger::LogSource::MINOTAURO, atual, dest, prox);
     return prox;
 }
 
@@ -85,12 +86,12 @@ int Minotauro::lembrarProxPasso(int atual, int dest){
 int Minotauro::lembrarDist(int atual, int dest){
     // Verifica se os índices estão dentro dos limites
     if (atual < 0 || dest < 0 || atual >= memoriaNumeroDeSalas || dest >= memoriaNumeroDeSalas) {
-        std::cerr << "[ERRO] lembrarDist: Indice fora do limite: atual=" << atual << ", dest=" << dest << std::endl;
+    Logger::error(0.0, "lembrarDist: Indice fora do limite: atual={}, dest={}", Logger::LogSource::MINOTAURO, atual, dest);
         return -1;
     }
     // Retorna a distância mínima de 'atual' para 'dest'
     int dist = memoriaDistancias[atual][dest];
-    std::clog << "[DEBUG] Minotauro::lembrarDist: atual=" << atual << ", dest=" << dest << ", dist=" << dist << std::endl;
+    Logger::info(0.0, "Minotauro::lembrarDist: atual={}, dest={}, dist={}", Logger::LogSource::MINOTAURO, atual, dest, dist);
     return dist;
 }
 
@@ -98,7 +99,7 @@ int Minotauro::lembrarDist(int atual, int dest){
  * @brief Atualiza a posição atual do Minotauro.
  */
 void Minotauro::mover(int prxVertice) {
-    std::clog << "[DEBUG] Minotauro::mover: de " << pos << " para " << prxVertice << std::endl;
+    Logger::info(0.0, "Minotauro::mover: de {} para {}", Logger::LogSource::MINOTAURO, pos, prxVertice);
     pos = prxVertice;
 }
 
