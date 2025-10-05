@@ -37,9 +37,10 @@ public:
     ResultadoSimulacao run(unsigned int seed, int chanceBatalha);
 
 private:
+    bool cheiroDePrisioneiro(int posMinotauro, int posPrisioneiro, int percepcao, Minotauro& m);
     bool prisioneiroBatalha(unsigned int seed, int chanceBatalha, std::mt19937& gerador);
     void turnoPrisioneiro(Prisioneiro& p);
-    int turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& gerador);
+    int turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& gerador,  bool cheiroDePrisioneiro);
     void verificaEstados(Prisioneiro& p, Minotauro& m, bool& fimDeJogo, bool& minotauroVivo, std::string& motivoFim, unsigned int seed, int chanceBatalha, std::mt19937& gerador);
 
 

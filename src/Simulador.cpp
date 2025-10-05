@@ -108,7 +108,8 @@ Simulador::ResultadoSimulacao Simulador::run(unsigned int seed, int chanceBatalh
         }
         else if (minotauroVivo){
             tempoGlobal = prxMovM;
-            turnoMinotauro(m, ultimaPosP, gerador);
+            bool temCheiroDePrisioneiro = cheiroDePrisioneiro(m.getPos(), p.getPos(), m.getPercepcao(), m);
+            turnoMinotauro(m, ultimaPosP, gerador, temCheiroDePrisioneiro);
         }
         verificaEstados(p,m,fimDeJogo,minotauroVivo,resultado.motivoFim, seed, chanceBatalha, gerador);
         if (fimDeJogo)
@@ -168,15 +169,39 @@ void Simulador::turnoPrisioneiro(Prisioneiro& p){
 }
 
 
-int Simulador::turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& gerador) {
+int Simulador::turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& gerador, bool cheiroDePrisioneiro) {
     m.setTempoMinotauro((tempoGlobal));
     int posAntiga = m.getPos();
     int proximoPasso = posAntiga;
-    int distancia = m.lembrarDist(posAntiga, posPrisioneiro);
 
-    if (distancia != -1 && distancia <= m.getPercepcao()) {
-    Logger::info(tempoGlobal, "Minotauro sente que o Prisioneiro está perto e começa a persegui-lo. Distância: {}", Logger::LogSource::MINOTAURO, distancia);
-        proximoPasso = m.lembrarProxPasso(posAntiga, posPrisioneiro);
+    if (cheiroDePrisioneiro) {
+        Logger::info(tempoGlobal, "Minotauro sente que o Prisioneiro está perto e começa a persegui-lo duas vezes mais rapido.", Logger::LogSource::MINOTAURO);
+        // Valida índices antes de consultar a memória do Minotauro
+        if (posAntiga >= 0 && posPrisioneiro >= 0) {
+            int memProx = m.lembrarProxPasso(posAntiga, posPrisioneiro);
+            if (memProx >= 0) {
+                proximoPasso = memProx;
+            } else {
+                // fallback para comportamento aleatório semelhante ao caso sem cheiro
+                const auto& vizinhos = labirinto.get_vizinhos(posAntiga);
+                int numVizinhos = 0;
+                for (auto no = vizinhos.get_cabeca(); no != nullptr; no = no->prox) {
+                    numVizinhos++;
+                }
+                if (numVizinhos > 0) {
+                    std::uniform_int_distribution<int> dist(0, numVizinhos - 1);
+                    int alvo = dist(gerador);
+                    int i = 0;
+                    for (auto no = vizinhos.get_cabeca(); no != nullptr; no = no->prox) {
+                        if (i == alvo) {
+                            proximoPasso = no->dado.primeiro;
+                            break;
+                        }
+                        i++;
+                    }
+                }
+            }
+        }
     } else {
     Logger::info(tempoGlobal, "Minotauro vaga atrás de alimento.", Logger::LogSource::MINOTAURO);
         const auto& vizinhos = labirinto.get_vizinhos(posAntiga);
@@ -201,7 +226,21 @@ int Simulador::turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& ge
     Logger::info(tempoGlobal, "Minotauro movendo da sala {} para {}.", Logger::LogSource::MINOTAURO, posAntiga, proximoPasso);
     if (posAntiga != proximoPasso) {
         resultado.caminhoM.push_back(proximoPasso);
-        prxMovM = tempoGlobal + labirinto.getPesoAresta(posAntiga, proximoPasso);
+        if (cheiroDePrisioneiro) {
+            prxMovM = tempoGlobal + (labirinto.getPesoAresta(posAntiga, proximoPasso) / 2);
+        } else {
+            prxMovM = tempoGlobal + labirinto.getPesoAresta(posAntiga, proximoPasso);
+        }
     }
     return 1;
+}
+
+bool Simulador::cheiroDePrisioneiro(int posMinotauro, int posPrisioneiro, int percepcao, Minotauro& m) {
+    // Valida índices antes de consultar a memória do Minotauro
+    if (posMinotauro < 0 || posPrisioneiro < 0)
+        return false;
+    int dist = m.lembrarDist(posMinotauro, posPrisioneiro);
+    if (dist < 0) // -1 indica erro ou caminho desconhecido
+        return false;
+    return dist <= percepcao;
 }
