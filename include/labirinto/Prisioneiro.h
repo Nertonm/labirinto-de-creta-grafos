@@ -38,10 +38,13 @@ public:
     int getKitsDeComida() const;
     bool foiVisitado(int vertice) const; // Método público adicionado
     int voltarAtras();
+    int getTempoPrisioneiro() const { return tempoPrisioneiro; }
+    void setTempoPrisioneiro(int tempo) { tempoPrisioneiro = tempo; }
 
 private:
     int pos; // Vértice atual do prisioneiro
     int kitsDeComida; // Número de kits de comida disponíveis
+    int tempoPrisioneiro; // Tempo atual do prisioneiro
     Novelo<MeuPair<int, int>> novelo; // Simula o fio de lã para o backtracking
     std::vector<int> caminho; // Histórico dos vértices visitados
     std::vector<HistoricoPrisioneiro> historico; // Histórico detalhado dos acontecimentos

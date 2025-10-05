@@ -160,7 +160,7 @@ private:
         }
 
         constexpr int timeWidth = 7;
-        constexpr int levelWidth = 8;
+        constexpr int levelWidth = 5;
         const char* agentColor = DEFAULT_AGENT_COLOR;
         switch (source) {
             case LogSource::PRISIONEIRO:
@@ -228,10 +228,10 @@ private:
 
     // Strings para os níveis
     inline static const std::map<LogLevel, std::string> levelStrings = {
-        {LogLevel::DEBUG,   "DEBUG  "},
-        {LogLevel::INFO,    "INFO   "},
-        {LogLevel::WARNING, "WARNING"},
-        {LogLevel::ERROR,   "ERROR  "}
+        {LogLevel::DEBUG,   "DEBUG"},
+        {LogLevel::INFO,    "INFO"},
+        {LogLevel::WARNING, "WARN"},
+        {LogLevel::ERROR,   "ERROR"}
     };
 
 

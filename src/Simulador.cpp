@@ -94,37 +94,27 @@ Simulador::ResultadoSimulacao Simulador::run(unsigned int seed, int chanceBatalh
     // Inicializa os tempos dos próximos movimentos
     prxMovP = 0.0; 
     prxMovM = 0.0;
-
-    // Estrutura para armazenar o resultado da simulação
-    Simulador::ResultadoSimulacao resultado;
-    bool fimDeJogo = false;
     bool minotauroVivo = true;
-    std::string motivoFim;
-    std::vector<EventoMovimento> eventos;
 
-    while (!fimDeJogo){
-        // Decide quem se move primeiro com base no próximo tempo de movimento
-        if (prxMovP <= prxMovM && p.getKitsDeComida() > 0) {
+    int ultimaPosP = p.getPos();
+
+    while (true){
+        bool turnoDoPrisioneiro = (prxMovP <= prxMovM || !minotauroVivo);
+
+        if (turnoDoPrisioneiro) {
             tempoGlobal = prxMovP;
+            ultimaPosP = p.getPos();
             turnoPrisioneiro(p);
         }
-        else if (minotauroVivo)
-        {
+        else if (minotauroVivo){
             tempoGlobal = prxMovM;
-            int custoMovimento = turnoMinotauro(m, p.getPos(), gerador);
-        } else {
-            tempoGlobal = prxMovP;
-            const auto& vizinhos = labirinto.get_vizinhos(p.getPos());
-            int custoMovimento = p.mover(vizinhos);
-            if (custoMovimento > 0){
-                prxMovP = tempoGlobal + custoMovimento;
-            } else {
-                resultado.motivoFim = "O prisioneiro ficou preso sem poder se mover.";
-                fimDeJogo = true;
-            }
+            turnoMinotauro(m, ultimaPosP, gerador);
         }
-        verificaEstados(p,m,fimDeJogo,minotauroVivo,motivoFim, seed, chanceBatalha, gerador);
+        verificaEstados(p,m,fimDeJogo,minotauroVivo,resultado.motivoFim, seed, chanceBatalha, gerador);
+        if (fimDeJogo)
+            break;
     }
+
     resultado.caminhoP = p.getCaminho();
     resultado.kitsRestantes = p.getKitsDeComida();
     resultado.posFinalP = p.getPos();
@@ -137,7 +127,7 @@ Simulador::ResultadoSimulacao Simulador::run(unsigned int seed, int chanceBatalh
 void Simulador::verificaEstados(Prisioneiro& p, Minotauro& m, bool& fimDeJogo, bool& minotauroVivo, std::string& motivoFim, unsigned int seed, int chanceBatalha, std::mt19937& gerador) {
     if (!p.getKitsDeComida()) {
         motivoFim = "O prisioneiro morreu de fome no dia " + std::to_string(static_cast<int>(tempoGlobal)) + ".";
-        Logger::warning(tempoGlobal, motivoFim, Logger::LogSource::PRISIONEIRO);
+        Logger::info(tempoGlobal, motivoFim, Logger::LogSource::PRISIONEIRO);
         resultado.prisioneiroSobreviveu = false;
         fimDeJogo = true;
     } else if (p.getPos() == labirinto.get_saida()) {
@@ -150,7 +140,6 @@ void Simulador::verificaEstados(Prisioneiro& p, Minotauro& m, bool& fimDeJogo, b
         if (prisioneiroBatalha(seed, chanceBatalha, gerador)) {
             minotauroVivo = false;
             Logger::info(tempoGlobal, "Prisioneiro venceu a batalha contra o Minotauro!", Logger::LogSource::PRISIONEIRO);
-            // O jogo continua, mas o Minotauro está fora de ação.
         } else {
             motivoFim = "Prisioneiro foi pego e devorado pelo Minotauro.";
             Logger::info(tempoGlobal, motivoFim, Logger::LogSource::MINOTAURO);
@@ -164,35 +153,32 @@ void Simulador::verificaEstados(Prisioneiro& p, Minotauro& m, bool& fimDeJogo, b
 
 
 void Simulador::turnoPrisioneiro(Prisioneiro& p){
-    // Turno do Prisioneiro
-    tempoGlobal = prxMovP;
+    p.setTempoPrisioneiro(tempoGlobal);
 
     int pos_antiga = p.getPos();
     const auto& vizinhos = labirinto.get_vizinhos(p.getPos());
     int custoMovimento = p.mover(vizinhos);
-    Logger::info(tempoGlobal, "Prisioneiro movendo da sala {} para {}. Custo: {} kits de comida.", Logger::LogSource::PRISIONEIRO, pos_antiga, p.getPos(), custoMovimento);
+    Logger::info(tempoGlobal, "Prisioneiro começando a se mover da sala {} para {}. Custo: {} kits de comida.", Logger::LogSource::PRISIONEIRO, pos_antiga, p.getPos(), custoMovimento);
     if (custoMovimento > 0){
         prxMovP = tempoGlobal + custoMovimento;
-    }
-    else{
-        resultado.motivoFim = "O prisioneiro ficou preso sem poder se mover.";
-    Logger::warning(tempoGlobal, resultado.motivoFim, Logger::LogSource::PRISIONEIRO);
-        resultado.prisioneiroSobreviveu = false;
-        fimDeJogo = true;
+    } else {
+        Logger::warning(tempoGlobal, "Prisioneiro está preso na sala {} e não conseguiu se mover.", Logger::LogSource::PRISIONEIRO, pos_antiga);
+        prxMovP = tempoGlobal + 1.0;
     }
 }
 
 
 int Simulador::turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& gerador) {
+    m.setTempoMinotauro((tempoGlobal));
     int posAntiga = m.getPos();
     int proximoPasso = posAntiga;
     int distancia = m.lembrarDist(posAntiga, posPrisioneiro);
 
     if (distancia != -1 && distancia <= m.getPercepcao()) {
-    Logger::info(tempoGlobal, "Minotauro em modo perseguição. Distância: {}", Logger::LogSource::MINOTAURO, distancia);
+    Logger::info(tempoGlobal, "Minotauro sente que o Prisioneiro está perto e começa a persegui-lo. Distância: {}", Logger::LogSource::MINOTAURO, distancia);
         proximoPasso = m.lembrarProxPasso(posAntiga, posPrisioneiro);
     } else {
-    Logger::info(tempoGlobal, "Minotauro em modo patrulha.", Logger::LogSource::MINOTAURO);
+    Logger::info(tempoGlobal, "Minotauro vaga atrás de alimento.", Logger::LogSource::MINOTAURO);
         const auto& vizinhos = labirinto.get_vizinhos(posAntiga);
         int numVizinhos = 0;
         for (auto no = vizinhos.get_cabeca(); no != nullptr; no = no->prox) {
@@ -215,7 +201,7 @@ int Simulador::turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& ge
     Logger::info(tempoGlobal, "Minotauro movendo da sala {} para {}.", Logger::LogSource::MINOTAURO, posAntiga, proximoPasso);
     if (posAntiga != proximoPasso) {
         resultado.caminhoM.push_back(proximoPasso);
-        return labirinto.getPesoAresta(posAntiga, proximoPasso);
+        prxMovM = tempoGlobal + labirinto.getPesoAresta(posAntiga, proximoPasso);
     }
     return 1;
 }

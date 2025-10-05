@@ -74,6 +74,19 @@ public:
      */
     int getPos() const;
 
+    /**
+     * @brief Obtém o tempo global da simulação.
+     * @return O tempo global atual.
+     */
+    int getTempoMinotauro() const { return tempoMinotauro; }
+
+    /**
+     * @brief Define o tempo global da simulação.
+     * @param tempo O novo valor do tempo global.
+     * @return O valor atualizado do tempo global.
+     */
+    void setTempoMinotauro(int tempo) { tempoMinotauro = tempo; }
+
 private:
     /// @brief O vértice (sala) atual onde o Minotauro está.
     int pos;
@@ -92,4 +105,7 @@ private:
 
     /// @brief Armazena o número total de salas para dimensionar as matrizes de memória.
     int memoriaNumeroDeSalas;
+
+    /// @brief Tempo global da simulação.
+    int tempoMinotauro;
 };
