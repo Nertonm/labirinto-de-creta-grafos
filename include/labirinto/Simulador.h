@@ -2,29 +2,64 @@
 #include "Grafo.h"
 #include "Prisioneiro.h"
 #include "Minotauro.h"
+#include "utils/Logger.h"
 #include <random>
 
 class Simulador {
 public:
-    // O construtor recebe uma referência para o fluxo do arquivo já aberto
-    Simulador(std::ifstream& arquivo_entrada);
 
-    void run(unsigned int seed, int chance_de_sobrevivencia);
-    bool prisioneiro_morreu_ou_viveu(unsigned int seed, int chance_de_sobrevivencia, std::mt19937& gerador);
+    // Estrutura para registrar eventos de movimento na simulação
+    struct EventoMovimento {
+        double tempoInicio;
+        double tempoFim;
+        std::string agente;
+        int origem;
+        int destino;
+        int peso;
+    };
+    Simulador();
+
+    bool carregarArquivo(const std::string& nome_arquivo);
+
+    // Estrutura para encapsular os resultados da simulação
+    struct ResultadoSimulacao{
+        bool prisioneiroSobreviveu;
+        int diasSobrevividos;
+        std::vector<int> caminhoP;
+        std::vector<int> caminhoM;
+        std::string motivoFim;
+        int kitsRestantes;
+        int posFinalP;
+        int posFinalM;
+        bool minotauroVivo;
+    };
+
+    ResultadoSimulacao run(unsigned int seed, int chanceBatalha);
 
 private:
-    Grafo labirinto;
-    // Minotauro cadelao;
+    bool prisioneiroBatalha(unsigned int seed, int chanceBatalha, std::mt19937& gerador);
+    void turnoPrisioneiro(Prisioneiro& p);
+    int turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& gerador);
+    void verificaEstados(Prisioneiro& p, Minotauro& m, bool& fimDeJogo, bool& minotauroVivo, std::string& motivoFim, unsigned int seed, int chanceBatalha, std::mt19937& gerador);
 
-public:
+
+    Grafo labirinto;
+    
+    int nA;
+    int nV;
     int vEntr;
     int vSaid;
     int posIniM;
-    int percepcao_minotauro;
+    int percepcaoMinotauro;
+
+    bool fimDeJogo;
+    std::vector<EventoMovimento> eventos;
+    ResultadoSimulacao resultado;
 
     int kitsDeComida;
 
-    double tempo_global;
+    // Estados da simulação
+    double tempoGlobal;
     double prxMovP;
     double prxMovM;
 };

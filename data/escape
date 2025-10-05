@@ -1,0 +1,11 @@
+5       # Numero de Vértices
+4       # Numero de Arestas
+0 1 2   # Arestas: um caminho reto
+1 2 3
+2 3 4
+3 4 2
+0       # Vértice de entrada
+4       # Vértice de saída
+2       # Posição inicial do Minotauro (no meio do caminho)
+1       # Percepção do Minotauro (muito baixa, não vai detectar)
+50      # Comida (suficiente)

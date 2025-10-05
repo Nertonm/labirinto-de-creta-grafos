@@ -1,15 +1,16 @@
 #include "labirinto/Grafo.h"
+#include "utils/Logger.h"
 #include <iostream>
 #include "estruturas/MinhaListaAdj.h"
 #include "estruturas/MeuPair.h"
 
 Grafo::Grafo() : nV(0), nA(0), vSaida(-1) {
     // O construtor é um bom lugar para inicializar os membros com valores padrão.
-    std::cout << "Objeto Grafo criado." << std::endl;
+    Logger::info(0.0, "Objeto Grafo criado.");
 }
 
 Grafo::~Grafo() {
-    std::cout << "Objeto Grafo destruído." << std::endl;
+    Logger::info(0.0, "Objeto Grafo destruído.");
 }
 
 void Grafo::adicionar_aresta(int u, int v, int peso) {
@@ -24,6 +25,19 @@ void Grafo::set_saida(int vSaida) {
 
 int Grafo::get_saida() const {
     return vSaida;
+}
+
+int Grafo::getPesoAresta(int u, int v) const {
+    auto it = adjacencias.find(u);
+    if (it != adjacencias.end()) {
+        const auto& lista = it->second;
+        for (auto no = lista.get_cabeca(); no != nullptr; no = no->prox) {
+            if (no->dado.primeiro == v) {
+                return no->dado.segundo; // Retorna o peso da aresta
+            }
+        }
+    }
+    return -1; // Retorna -1 se a aresta não existir
 }
 
 const listaAdj<MeuPair<int, int>>& Grafo::get_vizinhos(int vertice) const {

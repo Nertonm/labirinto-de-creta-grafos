@@ -1,0 +1,14 @@
+6       # Numero de Vértices
+7       # Numero de Arestas
+0 1 3
+0 2 2
+1 3 4
+2 3 1
+2 4 5
+3 5 6
+4 5 2
+0       # Vértice de entrada
+5       # Vértice de saída
+2       # Posição inicial do Minotauro (próximo à entrada)
+15      # Percepção do Minotauro (alta o suficiente para detectar na hora)
+30      # Comida (o bastante para ter uma chance)
