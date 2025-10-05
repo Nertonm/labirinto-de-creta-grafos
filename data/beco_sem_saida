@@ -1,0 +1,15 @@
+8       # Numero de Vértices
+8       # Numero de Arestas
+0 1 2
+1 2 2
+2 3 3   # O caminho para a saída
+2 4 1   # Início do beco sem saída
+4 5 4
+5 6 3
+1 7 5   # Aresta final para a saída
+3 7 2
+0       # Vértice de entrada
+7       # Vértice de saída
+6       # Posição inicial do Minotauro (longe, no final do beco)
+2       # Percepção do Minotauro (baixa)
+40      # Comida (suficiente para permitir o erro e o backtracking)
