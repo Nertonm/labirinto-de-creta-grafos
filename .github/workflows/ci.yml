@@ -31,6 +31,13 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-build-
 
+            - name: Configure CMake
+              if: steps.cache-build.outputs.cache-hit != 'true'
+              run: |
+                mkdir -p build
+                cd build
+                cmake ..
+
             - name: Build project
               id: build-project
               run: |
