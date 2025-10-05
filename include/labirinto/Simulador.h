@@ -24,8 +24,6 @@ public:
     };
 
     ResultadoSimulacao run(unsigned int seed, int chanceBatalha);
-    void imprimirInicioSimulacao();
-
 
 private:
     bool prisioneiroBatalha(unsigned int seed, int chanceBatalha, std::mt19937& gerador);
@@ -33,8 +31,6 @@ private:
     int turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& gerador);
     void verificaEstados(Prisioneiro& p, Minotauro& m, bool& fimDeJogo, bool& minotauroVivo, std::string& motivoFim, unsigned int seed, int chanceBatalha, std::mt19937& gerador);
 
-    void imprimirEstadoAtual(int tempoGlobal, const Prisioneiro& p, const Minotauro& m);
-    void imprimirFimSimulacao(const std::string& motivoFim, const Prisioneiro& p, const Minotauro& m);
 
     Grafo labirinto;
     
@@ -44,6 +40,9 @@ private:
     int vSaid;
     int posIniM;
     int percepcaoMinotauro;
+
+    bool fimDeJogo;
+    ResultadoSimulacao resultado;
 
     int kitsDeComida;
 
