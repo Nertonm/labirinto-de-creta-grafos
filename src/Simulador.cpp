@@ -226,10 +226,12 @@ int Simulador::turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& ge
     Logger::info(tempoGlobal, "Minotauro movendo da sala {} para {}.", Logger::LogSource::MINOTAURO, posAntiga, proximoPasso);
     if (posAntiga != proximoPasso) {
         resultado.caminhoM.push_back(proximoPasso);
+        double pesoAresta = static_cast<double>(labirinto.getPesoAresta(posAntiga, proximoPasso));
         if (cheiroDePrisioneiro) {
-            prxMovM = tempoGlobal + (labirinto.getPesoAresta(posAntiga, proximoPasso) / 2);
+            prxMovM = tempoGlobal + (pesoAresta / 2.0);
+            if (prxMovM <= tempoGlobal) prxMovM = tempoGlobal + 0.0001; // avanço mínimo para evitar repetir o evento no mesmo instante
         } else {
-            prxMovM = tempoGlobal + labirinto.getPesoAresta(posAntiga, proximoPasso);
+            prxMovM = tempoGlobal + pesoAresta;
         }
     }
     return 1;
