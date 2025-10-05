@@ -15,22 +15,28 @@ jobs:
 
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v5
 
             - name: Set up C++ environment
               uses: aminya/setup-cpp@v1.7.1
               with:
-                  compiler: gcc
+                 compiler: gcc
 
-            - name: Install dependencies
-              run: sudo apt-get install -y build-essential cmake
+            - name: Cache build directory
+              id: cache-build
+              uses: actions/cache@v4
+              with:
+                  path: build
+                  key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt', 'src/**', 'include/**') }}
+                  restore-keys: |
+                      ${{ runner.os }}-build-
 
-            - name: Build project
+            - name: Configure CMake
               run: |
-                  mkdir -p build
-                  cd build
-                  cmake ..
-                  cmake --build . --parallel
+                mkdir -p build
+                cd build
+                cmake ..
+                cmake --build . --parallel
 
             - name: Run tests
               run: |
