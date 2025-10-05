@@ -17,6 +17,11 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v5
 
+            - name: Set up C++ environment
+              uses: aminya/setup-cpp@v1.7.1
+              with:
+                 compiler: gcc
+
             - name: Cache build directory
               id: cache-build
               uses: actions/cache@v4
@@ -25,6 +30,7 @@ jobs:
                   key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}
                   restore-keys: |
                       ${{ runner.os }}-build-
+
             - name: Build project
               id: build-project
               run: |
@@ -34,18 +40,6 @@ jobs:
                   cmake --build . --parallel
                     restore-keys: |
                         ${{ runner.os }}-build-
-            - name: Build project
-              run: |
-                  mkdir -p build
-                  cd build
-                  cmake ..
-                  cmake --build . --parallel
-
-            - name: Set up C++ environment
-              uses: aminya/setup-cpp@v1.7.1
-              with:
-                 compiler: gcc
-
 
             - name: Run tests
               run: |
