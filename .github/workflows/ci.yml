@@ -37,7 +37,7 @@ jobs:
                   cd build
                   ./bin/simulador ../data/first_test 
             - name: Upload artifact
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@a2b8a0e5e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6
               with:
                   name: build-artifact
                   path: build/bin/
