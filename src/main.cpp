@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
         std::cout << "======================================================\n";
         std::cout << "             RELATÓRIO FINAL DA SIMULAÇÃO             \n";
         std::cout << "======================================================\n";
-        std::cout << "  Resultado: " << resultado.prisioneiroSobreviveu ;
+        std::cout << "  Resultado: " << (resultado.prisioneiroSobreviveu ? "Sim" : "Não");
         std::cout << "  Motivo: " << resultado.motivoFim << "\n";
         std::cout << "------------------------------------------------------\n";
         std::cout << "  Tempo total de sobrevivência: " << resultado.diasSobrevividos << " unidades de tempo\n";
