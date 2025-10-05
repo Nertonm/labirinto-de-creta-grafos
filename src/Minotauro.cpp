@@ -91,7 +91,7 @@ int Minotauro::lembrarDist(int atual, int dest){
     }
     // Retorna a distância mínima de 'atual' para 'dest'
     int dist = memoriaDistancias[atual][dest];
-    Logger::info(tempoMinotauro, "Minotauro na sala {} sente que o prisioneiro está na sala {}, sendo a distância até lá de {}", Logger::LogSource::MINOTAURO, atual, dest, dist);
+    //Logger::(tempoMinotauro, "Minotauro na sala {} sente que o prisioneiro está na sala {}, sendo a distância até lá de {}", Logger::LogSource::MINOTAURO, atual, dest, dist);
     return dist;
 }
 
