@@ -20,7 +20,7 @@ jobs:
 
         # Adicionar permissão de leitura para o conteúdo do repositório
         permissions:
-          contents: read
+          contents: write
         env:
           BUILD_TYPE: Release
           LAB_ANIM_DELAY_MS: 0
