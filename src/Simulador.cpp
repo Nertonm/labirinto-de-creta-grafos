@@ -11,9 +11,10 @@
 #include <sstream> // Essencial para o std::stringstream
 #include <iostream>
 #include <random> // Para geração de números aleatórios
+#include <limits>
 #include "utils/Logger.h"
 
-Simulador::Simulador() : fimDeJogo(false), tempoGlobal(0.0), prxMovP(0.0), prxMovM(0.0) {}
+Simulador::Simulador() : fimDeJogo(false), tempoGlobal(0.0), prxMovP(0.0), prxMovM(0.0), ultimaPosP(-1), ultimaPosM(-1) {}
 
 bool Simulador::carregarArquivo(const std::string& nomeArquivo) {
     std::ifstream arquivoEntrada(nomeArquivo);
@@ -61,8 +62,7 @@ bool Simulador::carregarArquivo(const std::string& nomeArquivo) {
     labirinto.set_saida(vSaid);
 
     Logger::info(0.0, "Arquivo carregado com sucesso: {}", Logger::LogSource::OUTRO, nomeArquivo);
-    Logger::SimulacaoInfo info = {vEntr, vSaid, posIniM, kitsDeComida, nV, nA, &labirinto};
-    Logger::imprimirInicioSimulacao(info);
+    // Cabeçalho inicial agora é responsabilidade do chamador (main) para respeitar modos de saída
     return true;
 }
 
@@ -81,6 +81,16 @@ bool Simulador::prisioneiroBatalha(unsigned int seed, int chanceBatalha, std::mt
  */
 Simulador::ResultadoSimulacao Simulador::run(unsigned int seed, int chanceBatalha) {
     tempoGlobal = 0.0;
+    // Reset estado/resultado da simulação
+    fimDeJogo = false;
+    encontroEdgePendente = false;
+    tempoEncontroEdge = -1.0;
+    resultado = ResultadoSimulacao{};
+    resultado.minotauroVivo = true;
+    resultado.motivoFim.clear();
+    resultado.tipoEncontro.clear();
+    resultado.tempoEncontro = -1.0;
+    resultado.eventos.clear();
     // Inicializa o gerador de números aleatórios com a seed fornecida
     std::mt19937 gerador(seed);
 
@@ -96,21 +106,57 @@ Simulador::ResultadoSimulacao Simulador::run(unsigned int seed, int chanceBatalh
     prxMovM = 0.0;
     bool minotauroVivo = true;
 
-    int ultimaPosP = p.getPos();
+    // inicializa posições de referência para checagem de encontro
+    ultimaPosP = p.getPos();
+    ultimaPosM = m.getPos();
 
     while (true){
-        bool turnoDoPrisioneiro = (prxMovP <= prxMovM || !minotauroVivo);
+        double tP = prxMovP;
+        double tM = minotauroVivo ? prxMovM : std::numeric_limits<double>::infinity();
+        double tE = encontroEdgePendente ? tempoEncontroEdge : std::numeric_limits<double>::infinity();
 
-        if (turnoDoPrisioneiro) {
+        double tNext = std::min(tP, std::min(tM, tE));
+
+        if (tNext == tE) {
+            // Evento: encontro em trânsito no meio da aresta
+            tempoGlobal = tempoEncontroEdge;
+            encontroEdgePendente = false; // consome evento
+            Logger::info(tempoGlobal, "Prisioneiro e Minotauro se cruzam no corredor entre {} e {}!", Logger::LogSource::OUTRO, ultimaPosP, destAtualP);
+            // Resolve batalha
+            resultado.tempoEncontro = tempoGlobal;
+            resultado.tipoEncontro = "aresta";
+            if (prisioneiroBatalha(seed, chanceBatalha, gerador)) {
+                Logger::info(tempoGlobal, "Prisioneiro venceu a batalha contra o Minotauro!", Logger::LogSource::PRISIONEIRO);
+                resultado.prisioneiroSobreviveu = true;
+                resultado.minotauroVivo = false;
+                this->resultado.motivoFim = "Prisioneiro derrotou o Minotauro.";
+                fimDeJogo = true;
+            } else {
+                std::string motivoFim = "Prisioneiro foi pego e devorado pelo Minotauro.";
+                Logger::info(tempoGlobal, motivoFim, Logger::LogSource::MINOTAURO);
+                resultado.prisioneiroSobreviveu = false;
+                resultado.minotauroVivo = true;
+                this->resultado.motivoFim = motivoFim;
+                fimDeJogo = true;
+            }
+        } else if (tNext == tP || !minotauroVivo) {
             tempoGlobal = prxMovP;
+            // ao iniciar um novo deslocamento do prisioneiro, fixa a última sala
             ultimaPosP = p.getPos();
             turnoPrisioneiro(p);
-        }
-        else if (minotauroVivo){
+            // após agendar movimento, verificar cruzamento em aresta
+            agendarEncontroEmArestaSeNecessario();
+        } else {
             tempoGlobal = prxMovM;
             bool temCheiroDePrisioneiro = cheiroDePrisioneiro(m.getPos(), p.getPos(), m.getPercepcao(), m);
+            // fixa a última sala do minotauro antes de iniciar o deslocamento
+            ultimaPosM = m.getPos();
             turnoMinotauro(m, ultimaPosP, gerador, temCheiroDePrisioneiro);
+            // após agendar movimento, verificar cruzamento em aresta
+            agendarEncontroEmArestaSeNecessario();
         }
+        if (fimDeJogo)
+            break;
         verificaEstados(p,m,fimDeJogo,minotauroVivo,resultado.motivoFim, seed, chanceBatalha, gerador);
         if (fimDeJogo)
             break;
@@ -121,6 +167,7 @@ Simulador::ResultadoSimulacao Simulador::run(unsigned int seed, int chanceBatalh
     resultado.posFinalP = p.getPos();
     resultado.posFinalM = m.getPos();
     resultado.diasSobrevividos = static_cast<int>(tempoGlobal);
+    resultado.tempoReal = tempoGlobal;
 
     return resultado;
 }
@@ -136,17 +183,25 @@ void Simulador::verificaEstados(Prisioneiro& p, Minotauro& m, bool& fimDeJogo, b
         Logger::info(tempoGlobal, motivoFim, Logger::LogSource::PRISIONEIRO);
         resultado.prisioneiroSobreviveu = true;
         fimDeJogo = true;
-    } else if (p.getPos() == m.getPos() && minotauroVivo) {
-        Logger::info(tempoGlobal, "Prisioneiro encontrou o Minotauro!", Logger::LogSource::PRISIONEIRO);
-        if (prisioneiroBatalha(seed, chanceBatalha, gerador)) {
-            minotauroVivo = false;
-            Logger::info(tempoGlobal, "Prisioneiro venceu a batalha contra o Minotauro!", Logger::LogSource::PRISIONEIRO);
-        } else {
-            motivoFim = "Prisioneiro foi pego e devorado pelo Minotauro.";
-            Logger::info(tempoGlobal, motivoFim, Logger::LogSource::MINOTAURO);
-            resultado.prisioneiroSobreviveu = false;
-            resultado.minotauroVivo = true;
-            fimDeJogo = true;
+    } else {
+        // Encontro apenas quando ambos não estão em trânsito e ocupam a mesma sala
+        bool pEmTransito = prxMovP > tempoGlobal;
+        bool mEmTransito = prxMovM > tempoGlobal;
+        if (!pEmTransito && !mEmTransito && p.getPos() == m.getPos() && minotauroVivo) {
+            Logger::info(tempoGlobal, "Prisioneiro encontrou o Minotauro!", Logger::LogSource::PRISIONEIRO);
+            resultado.tempoEncontro = tempoGlobal;
+            resultado.tipoEncontro = "sala";
+            if (prisioneiroBatalha(seed, chanceBatalha, gerador)) {
+                minotauroVivo = false;
+                resultado.minotauroVivo = false;
+                Logger::info(tempoGlobal, "Prisioneiro venceu a batalha contra o Minotauro!", Logger::LogSource::PRISIONEIRO);
+            } else {
+                motivoFim = "Prisioneiro foi pego e devorado pelo Minotauro.";
+                Logger::info(tempoGlobal, motivoFim, Logger::LogSource::MINOTAURO);
+                resultado.prisioneiroSobreviveu = false;
+                resultado.minotauroVivo = true;
+                fimDeJogo = true;
+            }
         }
     }
 }
@@ -162,9 +217,15 @@ void Simulador::turnoPrisioneiro(Prisioneiro& p){
     Logger::info(tempoGlobal, "Prisioneiro começando a se mover da sala {} para {}. Custo: {} kits de comida.", Logger::LogSource::PRISIONEIRO, pos_antiga, p.getPos(), custoMovimento);
     if (custoMovimento > 0){
         prxMovP = tempoGlobal + custoMovimento;
+    inicioMovP = tempoGlobal;
+    destAtualP = p.getPos();
+    resultado.eventos.push_back(Logger::EventoMovimento{tempoGlobal, prxMovP, "Prisioneiro", pos_antiga, destAtualP, custoMovimento});
     } else {
         Logger::warning(tempoGlobal, "Prisioneiro está preso na sala {} e não conseguiu se mover.", Logger::LogSource::PRISIONEIRO, pos_antiga);
         prxMovP = tempoGlobal + 1.0;
+    inicioMovP = tempoGlobal;
+    destAtualP = p.getPos();
+    resultado.eventos.push_back(Logger::EventoMovimento{tempoGlobal, prxMovP, "Prisioneiro", pos_antiga, destAtualP, 1});
     }
 }
 
@@ -233,6 +294,9 @@ int Simulador::turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& ge
         } else {
             prxMovM = tempoGlobal + pesoAresta;
         }
+        inicioMovM = tempoGlobal;
+        destAtualM = proximoPasso;
+    resultado.eventos.push_back(Logger::EventoMovimento{tempoGlobal, prxMovM, "Minotauro", posAntiga, destAtualM, static_cast<int>(pesoAresta)});
     }
     return 1;
 }
@@ -245,4 +309,59 @@ bool Simulador::cheiroDePrisioneiro(int posMinotauro, int posPrisioneiro, int pe
     if (dist < 0) // -1 indica erro ou caminho desconhecido
         return false;
     return dist <= percepcao;
+}
+
+// Detecta se os agentes estão cruzando a mesma aresta em sentidos opostos com intervalos de viagem sobrepostos.
+bool Simulador::detectarEncontroEmAresta(double& tEncontroOut) {
+    // Ambos precisam estar em trânsito
+    if (!(prxMovP > tempoGlobal && prxMovM > tempoGlobal)) return false;
+
+    // Devem estar na mesma aresta e em sentidos opostos
+    if (!(ultimaPosP == destAtualM && destAtualP == ultimaPosM)) return false;
+
+    // Comprimento da aresta
+    int Lw = labirinto.getPesoAresta(ultimaPosP, destAtualP);
+    if (Lw <= 0) return false;
+    double L = static_cast<double>(Lw);
+
+    // Velocidades (constantes ao longo da aresta)
+    double dP = prxMovP - inicioMovP;
+    double dM = prxMovM - inicioMovM;
+    if (dP <= 0.0 || dM <= 0.0) return false;
+    double vP = L / dP;
+    double vM = L / dM;
+
+    // Tempo de encontro te após ambos terem iniciado
+    double te = (L + vP*inicioMovP + vM*inicioMovM) / (vP + vM);
+
+    // Valida que te ocorre enquanto ambos ainda estão viajando
+    double s = std::max(inicioMovP, inicioMovM);
+    double e = std::min(prxMovP, prxMovM);
+    if (te + 1e-9 < s || te - 1e-9 > e) return false;
+
+    tEncontroOut = te;
+    return true;
+}
+
+void Simulador::agendarEncontroEmArestaSeNecessario() {
+    double tCand = -1.0;
+    if (detectarEncontroEmAresta(tCand)) {
+        if (!encontroEdgePendente || tCand < tempoEncontroEdge - 1e-9) {
+            encontroEdgePendente = true;
+            tempoEncontroEdge = tCand;
+        }
+    }
+}
+
+// Fornece informações para imprimir o cabeçalho inicial da simulação (somente em modo humano)
+Logger::SimulacaoInfo Simulador::getSimulacaoInfo() const {
+    Logger::SimulacaoInfo info;
+    info.vEntrada = vEntr;
+    info.vSaida = labirinto.get_saida();
+    info.posMinotauro = posIniM;
+    info.kitsComida = kitsDeComida;
+    info.numVertices = nV;
+    info.numArestas = nA;
+    info.labirinto = &labirinto;
+    return info;
 }
