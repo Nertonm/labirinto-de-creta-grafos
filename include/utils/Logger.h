@@ -18,6 +18,9 @@
 #include <map>
 #include <thread>
 #include <chrono>
+#include <set>
+#include <algorithm>
+#include <cmath>
 #include "labirinto/Grafo.h" // Necessário para imprimir os vizinhos
 
 /**
@@ -145,6 +148,12 @@ public:
      * @param eventos Um vetor contendo todos os movimentos que ocorreram.
      */
     static void printarLogsComProgresso(const std::vector<EventoMovimento>& eventos);
+
+    // Versão estendida: permite destacar um encontro específico (tipo/tempo)
+    static void printarLogsComProgresso(const std::vector<EventoMovimento>& eventos,
+                                        double tempoEncontro,
+                                        const std::string& tipoEncontro,
+                                        const std::string& localEncontro);
 
 private:
     /**
@@ -318,49 +327,97 @@ inline void Logger::imprimirInicioSimulacao(const Logger::SimulacaoInfo& info) {
 }
 
 inline void Logger::printarLogsComProgresso(const std::vector<EventoMovimento>& eventos) {
-    std::map<double, std::vector<const EventoMovimento*>> eventosPorTempo;
+    // Renderização cronológica global: une todos os "ticks" de tempo (início, progresso, chegada)
+    const int barraLen = 20;
+    std::set<double> ticks;
+    ticks.clear();
     for (const auto& ev : eventos) {
-        eventosPorTempo[ev.tempoInicio].push_back(&ev);
-    }
-    double tempoGlobal = 0.0;
-    for (const auto& [tempo, grupo] : eventosPorTempo) {
-        tempoGlobal = tempo;
-        std::cout << std::fixed << std::setprecision(2);
-        std::this_thread::sleep_for(std::chrono::milliseconds(400));
-        for (const auto* ev : grupo) {
-            std::string cor = (ev->agente == "Minotauro") ? "\033[38;5;94m" : "\033[1;32m";
-            std::cout << cor << "[TEMPO " << tempoGlobal << "] " << ev->agente << " começou a ir de " << ev->origem << " para " << ev->destino << " (peso: " << ev->peso << ")" << "\033[0m" << std::endl;
-            std::cout << "    Detalhes: origem=" << ev->origem << ", destino=" << ev->destino << ", peso=" << ev->peso << std::endl;
+        ticks.insert(ev.tempoInicio);
+        ticks.insert(ev.tempoFim);
+        // amostragem de progresso para animação
+        double dur = ev.tempoFim - ev.tempoInicio;
+        if (dur <= 0) continue;
+        for (int i = 1; i < barraLen; ++i) {
+            double t = ev.tempoInicio + dur * (double(i) / barraLen);
+            ticks.insert(t);
         }
-        int barraLen = 20;
-        for (int p = 0; p <= barraLen; ++p) {
-            double t = tempoGlobal + (grupo[0]->tempoFim-grupo[0]->tempoInicio) * (double(p)/barraLen);
-            int porcento = int(100.0 * p / barraLen);
-            for (const auto* ev : grupo) {
-                std::string cor = (ev->agente == "Minotauro") ? "\033[38;5;94m" : "\033[1;32m";
-                std::cout << cor << "[TEMPO " << t << "] " << ev->agente << " progresso: [";
-                for (int b = 0; b < barraLen; ++b) std::cout << (b < p ? '#' : '-');
+    }
+    std::vector<double> tempoOrdenado(ticks.begin(), ticks.end());
+    std::set<const EventoMovimento*> iniciou;
+    std::set<const EventoMovimento*> chegou;
+
+    std::cout << std::fixed << std::setprecision(2);
+    // Configura atraso via env (LAB_ANIM_DELAY_MS); padrão 120ms
+    auto get_delay_ms = []() -> int {
+        const char* v = std::getenv("LAB_ANIM_DELAY_MS");
+        if (!v) return 120;
+        try {
+            int ms = std::stoi(v);
+            if (ms < 0) ms = 0;
+            if (ms > 2000) ms = 2000;
+            return ms;
+        } catch (...) { return 120; }
+    };
+    const int delay_ms = get_delay_ms();
+
+    for (double t : tempoOrdenado) {
+        // Pequena pausa para efeito de animação
+        std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
+
+        // 1) Chegadas neste tempo (fechar deslocamentos antes de iniciar novos no mesmo instante)
+        for (const auto& ev : eventos) {
+            if (std::abs(ev.tempoFim - t) < 1e-9 && !chegou.count(&ev)) {
+                const char* cor = (ev.agente == "Minotauro") ? "\033[38;5;94m" : "\033[1;32m";
+                std::cout << cor << "[TEMPO " << t << "] " << ev.agente << " chegou em " << ev.destino << "\033[0m" << std::endl;
+                chegou.insert(&ev);
+            }
+        }
+
+        // 2) Inícios neste tempo
+        for (const auto& ev : eventos) {
+            if (std::abs(ev.tempoInicio - t) < 1e-9 && !iniciou.count(&ev)) {
+                const char* cor = (ev.agente == "Minotauro") ? "\033[38;5;94m" : "\033[1;32m";
+                std::cout << cor << "[TEMPO " << t << "] " << ev.agente
+                          << " começou a ir de " << ev.origem << " para " << ev.destino
+                          << " (peso: " << ev.peso << ")" << "\033[0m" << std::endl;
+                std::cout << "    Detalhes: origem=" << ev.origem << ", destino=" << ev.destino << ", peso=" << ev.peso << std::endl;
+                iniciou.insert(&ev);
+            }
+        }
+
+        // 3) Progresso para todos em trânsito neste tempo
+        for (const auto& ev : eventos) {
+            if (t + 1e-9 >= ev.tempoInicio && t <= ev.tempoFim + 1e-9) {
+                double dur = ev.tempoFim - ev.tempoInicio;
+                double frac = (dur > 0) ? std::clamp((t - ev.tempoInicio) / dur, 0.0, 1.0) : 1.0;
+                int filled = (int)std::round(frac * barraLen);
+                int porcento = (int)std::round(frac * 100.0);
+                const char* cor = (ev.agente == "Minotauro") ? "\033[38;5;94m" : "\033[1;32m";
+                std::cout << cor << "[TEMPO " << t << "] " << ev.agente << " progresso: [";
+                for (int b = 0; b < barraLen; ++b) std::cout << (b < filled ? '#' : '-');
                 std::cout << "] " << porcento << "%\033[0m" << std::endl;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
-        for (const auto* ev : grupo) {
-            std::string cor = (ev->agente == "Minotauro") ? "\033[38;5;94m" : "\033[1;32m";
-            std::cout << cor << "[TEMPO " << ev->tempoFim << "] " << ev->agente << " chegou em " << ev->destino << "\033[0m" << std::endl;
-            for (const auto* outro : grupo) {
-                if (ev->agente != outro->agente && ev->destino == outro->destino) {
-                    std::cout << "\n\033[1;31m";
-                    std::cout << "════════════════════════════════════════════════════════════\n";
-                    std::cout << "*** ENCONTRO! Minotauro encontrou o Prisioneiro na sala " << ev->destino << "! ***\n";
-                    std::cout << "Motivo: Ambos chegaram na mesma sala ao mesmo tempo.\n";
-                    std::cout << "Estado no momento do encontro:\n";
-                    std::cout << "  - Minotauro: posição=" << ev->destino << ", tempo=" << ev->tempoFim << "\n";
-                    std::cout << "  - Prisioneiro: posição=" << outro->destino << ", tempo=" << outro->tempoFim << "\n";
-                    std::cout << "════════════════════════════════════════════════════════════\n";
-                    std::cout << "\033[0m\n";
-                }
-            }
+    }
+}
+
+inline void Logger::printarLogsComProgresso(const std::vector<EventoMovimento>& eventos,
+                                            double tempoEncontro,
+                                            const std::string& tipoEncontro,
+                                            const std::string& localEncontro) {
+    // Reaproveita a impressão padrão
+    printarLogsComProgresso(eventos);
+
+    // Destaque do encontro, se houver
+    if (tempoEncontro >= 0) {
+        std::cout << "\n\033[1;31m";
+        std::cout << "      ╔══════════════════════════════════════════════╗\n";
+        std::cout << "      ║             ⚔ ENCONTRO DECISIVO ⚔           ║\n";
+        std::cout << "      ╚══════════════════════════════════════════════╝\n";
+        std::cout << "   » Tipo: " << tipoEncontro << "  •  Tempo: " << std::fixed << std::setprecision(2) << tempoEncontro << "\n";
+        if (!localEncontro.empty()) {
+            std::cout << "   » Local: " << localEncontro << "\n";
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(400));
+        std::cout << "\033[0m\n";
     }
 }
