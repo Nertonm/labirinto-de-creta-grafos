@@ -20,6 +20,12 @@ const int INF = std::numeric_limits<int>::max();
 
 /**
  * @brief Construtor da classe Minotauro.
+ * @details Inicializa os atributos do Minotauro e aloca espaço para suas
+ * matrizes de memória com base no número de vértices do labirinto.
+ * @param posInicial O vértice (sala) inicial onde o Minotauro é criado.
+ * @param percepcao A distância máxima na qual o Minotauro pode detectar o prisioneiro.
+ * @param labirinto Uma referência constante ao objeto Grafo que representa o labirinto.
+ * @param nV O número total de vértices no labirinto.
  */
 Minotauro::Minotauro(int posInicial, int percepcao, const Grafo& labirinto, int nV)
     : pos(posInicial), percepcao(percepcao), labirinto(labirinto), memoriaNumeroDeSalas(nV) {
@@ -30,6 +36,11 @@ Minotauro::Minotauro(int posInicial, int percepcao, const Grafo& labirinto, int 
 
 /**
  * @brief Pré-calcula e memoriza os caminhos mínimos entre todos os pares de vértices.
+ * @details Este método implementa o algoritmo de Floyd-Warshall. Ele preenche as
+ * matrizes `memoriaDistancias` e `memoriaCaminho`, dando ao Minotauro
+ * conhecimento onisciente do labirinto. Deve ser chamado uma única vez no início da simulação.
+ * @post As matrizes de memória estarão preenchidas com as distâncias e os
+ * próximos passos para todos os caminhos mínimos.
  */
 void Minotauro::lembrarCaminhos() {
     int n = memoriaNumeroDeSalas;
@@ -67,6 +78,10 @@ void Minotauro::lembrarCaminhos() {
 
 /**
  * @brief Consulta a memória para encontrar o próximo passo em um caminho mínimo.
+ * @param atual O vértice de origem.
+ * @param dest O vértice de destino.
+ * @return O primeiro vértice no caminho mais curto de 'atual' para 'dest'.
+ * @retval -1 Se os índices forem inválidos.
  */
 int Minotauro::lembrarProxPasso(int atual, int dest){
     // Verifica se os índices estão dentro dos limites
@@ -82,6 +97,10 @@ int Minotauro::lembrarProxPasso(int atual, int dest){
 
 /**
  * @brief Consulta a memória para encontrar a distância de um caminho mínimo.
+ * @param atual O vértice de origem.
+ * @param dest O vértice de destino.
+ * @return A distância total (soma dos pesos) do caminho mais curto entre 'atual' e 'dest'.
+ * @retval -1 Se os índices forem inválidos.
  */
 int Minotauro::lembrarDist(int atual, int dest){
     // Verifica se os índices estão dentro dos limites
@@ -97,6 +116,7 @@ int Minotauro::lembrarDist(int atual, int dest){
 
 /**
  * @brief Atualiza a posição atual do Minotauro.
+ * @param prxVertice O novo vértice para o qual o Minotauro se moverá.
  */
 void Minotauro::mover(int prxVertice) {
     // Logger::info(tempoMinotauro, "Minotauro::mover: de {} para {}", Logger::LogSource::MINOTAURO, pos, prxVertice);
@@ -105,14 +125,15 @@ void Minotauro::mover(int prxVertice) {
 
 /**
  * @brief Obtém o alcance de percepção do Minotauro.
+ * @return A distância máxima de percepção.
 */
 int Minotauro::getPercepcao() const {
     return percepcao;
 }
 
-
 /**
  * @brief Obtém a posição atual do Minotauro.
+ * @return O ID do vértice onde o Minotauro está localizado.
  */
 int Minotauro::getPos() const {
     return pos;

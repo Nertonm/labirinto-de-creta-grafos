@@ -1,3 +1,12 @@
+/**
+ * @file Simulador.cpp
+ * @author Thiago Nerton
+ * @brief Implementação da classe Simulador.
+ * @details Este arquivo contém a lógica central que gerencia o loop da simulação,
+ * o carregamento de dados, o processamento de turnos dos agentes (Prisioneiro e
+ * Minotauro) e a verificação das condições de fim de jogo.
+ */
+
 #include <iomanip>
 #include <queue>
 #include <thread>
@@ -14,8 +23,19 @@
 #include <limits>
 #include "utils/Logger.h"
 
+/**
+ * @brief Construtor da classe Simulador.
+ * @details Inicializa as variáveis de estado da simulação com seus valores padrão.
+ */
 Simulador::Simulador() : fimDeJogo(false), tempoGlobal(0.0), prxMovP(0.0), prxMovM(0.0), ultimaPosP(-1), ultimaPosM(-1) {}
 
+/**
+ * @brief Carrega a configuração do labirinto e da simulação a partir de um arquivo de texto.
+ * @details Lê o número de vértices, arestas, as conexões do grafo e os parâmetros
+ * iniciais da simulação (posições, percepção, comida).
+ * @param nomeArquivo O caminho para o arquivo de configuração.
+ * @return `true` se o arquivo foi carregado com sucesso, `false` caso contrário.
+ */
 bool Simulador::carregarArquivo(const std::string& nomeArquivo) {
     std::ifstream arquivoEntrada(nomeArquivo);
     Logger::info(0.0, "Iniciando carregamento do arquivo: {}", Logger::LogSource::OUTRO, nomeArquivo);
@@ -62,10 +82,18 @@ bool Simulador::carregarArquivo(const std::string& nomeArquivo) {
     labirinto.set_saida(vSaid);
 
     Logger::info(0.0, "Arquivo carregado com sucesso: {}", Logger::LogSource::OUTRO, nomeArquivo);
-    // Cabeçalho inicial agora é responsabilidade do chamador (main) para respeitar modos de saída
     return true;
 }
 
+/**
+ * @brief Simula uma batalha entre o prisioneiro e o Minotauro.
+ * @details Gera um número aleatório de 1 a 100 e verifica se é menor ou igual à
+ * chance de batalha do prisioneiro.
+ * @param seed A semente para o gerador de números aleatórios (não utilizada diretamente, mas garante consistência).
+ * @param chanceBatalha A chance percentual (1-100) de o prisioneiro vencer.
+ * @param gerador A instância do gerador de números aleatórios a ser usada.
+ * @return `true` se o prisioneiro venceu a batalha, `false` caso contrário.
+ */
 bool Simulador::prisioneiroBatalha(unsigned int seed, int chanceBatalha, std::mt19937& gerador) {
     std::uniform_int_distribution<int> dist(1, 100);
     int sorte = dist(gerador);
@@ -75,9 +103,13 @@ bool Simulador::prisioneiroBatalha(unsigned int seed, int chanceBatalha, std::mt
 
 /**
  * @brief Executa o loop principal da simulação.
- * @details A lógica de tempo foi refatorada para um sistema de eventos discreto.
- * O loop avança o tempo para o próximo evento agendado (movimento de um
- * agente), garantindo uma progressão de tempo consistente e correta.
+ * @details A simulação opera em um sistema de eventos discretos. O loop principal
+ * avança o tempo para o próximo evento agendado (chegada de um agente a uma sala
+ * ou um encontro em uma aresta). Ele processa o evento, agenda o próximo movimento
+ * do agente envolvido e verifica as condições de fim de jogo a cada passo.
+ * @param seed A semente para inicializar o gerador de números aleatórios, garantindo a reprodutibilidade.
+ * @param chanceBatalha A chance percentual de o prisioneiro vencer um encontro.
+ * @return Uma struct `ResultadoSimulacao` contendo todos os dados do desfecho da simulação.
  */
 Simulador::ResultadoSimulacao Simulador::run(unsigned int seed, int chanceBatalha) {
     tempoGlobal = 0.0;
@@ -172,6 +204,19 @@ Simulador::ResultadoSimulacao Simulador::run(unsigned int seed, int chanceBatalh
     return resultado;
 }
 
+/**
+ * @brief Verifica o estado atual da simulação para determinar se o jogo terminou.
+ * @details Checa as três condições de término: prisioneiro sem comida, prisioneiro na saída,
+ * ou um encontro entre prisioneiro e Minotauro na mesma sala.
+ * @param p Referência ao objeto Prisioneiro.
+ * @param m Referência ao objeto Minotauro.
+ * @param fimDeJogo Referência ao booleano que controla o loop principal.
+ * @param minotauroVivo Referência ao booleano que indica se o Minotauro está vivo.
+ * @param motivoFim Referência à string que armazenará a razão do fim da simulação.
+ * @param seed Semente para a batalha.
+ * @param chanceBatalha Chance de vitória do prisioneiro na batalha.
+ * @param gerador Gerador de números aleatórios para a batalha.
+ */
 void Simulador::verificaEstados(Prisioneiro& p, Minotauro& m, bool& fimDeJogo, bool& minotauroVivo, std::string& motivoFim, unsigned int seed, int chanceBatalha, std::mt19937& gerador) {
     if (!p.getKitsDeComida()) {
         motivoFim = "O prisioneiro morreu de fome no dia " + std::to_string(static_cast<int>(tempoGlobal)) + ".";
@@ -207,7 +252,12 @@ void Simulador::verificaEstados(Prisioneiro& p, Minotauro& m, bool& fimDeJogo, b
 }
 
 
-
+/**
+ * @brief Processa um turno de movimento para o prisioneiro.
+ * @details Invoca o método `mover` do prisioneiro para determinar a próxima sala.
+ * Com base no custo do movimento, agenda o próximo evento de chegada do prisioneiro (`prxMovP`).
+ * @param p Referência ao objeto Prisioneiro.
+ */
 void Simulador::turnoPrisioneiro(Prisioneiro& p){
     p.setTempoPrisioneiro(tempoGlobal);
 
@@ -230,6 +280,17 @@ void Simulador::turnoPrisioneiro(Prisioneiro& p){
 }
 
 
+/**
+ * @brief Processa um turno de movimento para o Minotauro.
+ * @details Determina o próximo movimento do Minotauro. Se ele "sente o cheiro" do prisioneiro,
+ * ele usa sua memória para se mover pelo caminho mais rápido. Caso contrário, move-se
+ * aleatoriamente. Agenda o próximo evento de chegada do Minotauro (`prxMovM`).
+ * @param m Referência ao objeto Minotauro.
+ * @param posPrisioneiro A posição atual do prisioneiro.
+ * @param gerador Gerador de números aleatórios para o movimento errante.
+ * @param cheiroDePrisioneiro `true` se o Minotauro detectou o prisioneiro.
+ * @return Retorna 1 indicando que o turno foi processado.
+ */
 int Simulador::turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& gerador, bool cheiroDePrisioneiro) {
     m.setTempoMinotauro((tempoGlobal));
     int posAntiga = m.getPos();
@@ -301,6 +362,14 @@ int Simulador::turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& ge
     return 1;
 }
 
+/**
+ * @brief Verifica se o Minotauro pode detectar o prisioneiro.
+ * @param posMinotauro Posição atual do Minotauro.
+ * @param posPrisioneiro Posição atual do prisioneiro.
+ * @param percepcao O alcance da percepção do Minotauro.
+ * @param m Referência ao objeto Minotauro para consultar a distância.
+ * @return `true` se a distância entre eles for menor ou igual à percepção, `false` caso contrário.
+ */
 bool Simulador::cheiroDePrisioneiro(int posMinotauro, int posPrisioneiro, int percepcao, Minotauro& m) {
     // Valida índices antes de consultar a memória do Minotauro
     if (posMinotauro < 0 || posPrisioneiro < 0)
@@ -311,7 +380,11 @@ bool Simulador::cheiroDePrisioneiro(int posMinotauro, int posPrisioneiro, int pe
     return dist <= percepcao;
 }
 
-// Detecta se os agentes estão cruzando a mesma aresta em sentidos opostos com intervalos de viagem sobrepostos.
+/**
+ * @brief Se um encontro em uma aresta for detectado, agenda um novo evento de encontro.
+ * @details Chama `detectarEncontroEmAresta` e, se um encontro for iminente,
+ * define `encontroEdgePendente` como `true` e armazena o tempo do evento em `tempoEncontroEdge`.
+ */
 bool Simulador::detectarEncontroEmAresta(double& tEncontroOut) {
     // Ambos precisam estar em trânsito
     if (!(prxMovP > tempoGlobal && prxMovM > tempoGlobal)) return false;
@@ -337,12 +410,19 @@ bool Simulador::detectarEncontroEmAresta(double& tEncontroOut) {
     // Valida que te ocorre enquanto ambos ainda estão viajando
     double s = std::max(inicioMovP, inicioMovM);
     double e = std::min(prxMovP, prxMovM);
+    // Verifica se o tempo de encontro está dentro do intervalo
     if (te + 1e-9 < s || te - 1e-9 > e) return false;
 
+    // Tudo ok, retorna o tempo de encontro
     tEncontroOut = te;
     return true;
 }
 
+/**
+ * @brief Se um encontro em uma aresta for detectado, agenda um novo evento de encontro.
+ * @details Chama `detectarEncontroEmAresta` e, se um encontro for iminente,
+ * define `encontroEdgePendente` como `true` e armazena o tempo do evento em `tempoEncontroEdge`.
+ */
 void Simulador::agendarEncontroEmArestaSeNecessario() {
     double tCand = -1.0;
     if (detectarEncontroEmAresta(tCand)) {
@@ -353,7 +433,11 @@ void Simulador::agendarEncontroEmArestaSeNecessario() {
     }
 }
 
-// Fornece informações para imprimir o cabeçalho inicial da simulação (somente em modo humano)
+/**
+ * @brief Coleta e retorna as informações iniciais da simulação.
+ * @details Usado para imprimir o cabeçalho no modo de relatório humano.
+ * @return Uma struct `Logger::SimulacaoInfo` com os dados da configuração inicial.
+ */
 Logger::SimulacaoInfo Simulador::getSimulacaoInfo() const {
     Logger::SimulacaoInfo info;
     info.vEntrada = vEntr;

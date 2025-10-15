@@ -1,4 +1,11 @@
-// src/main.cpp
+/**
+ * @file main.cpp
+ * @author Thiago Nerton
+ * @brief Ponto de entrada principal da aplicação de simulação.
+ * @details Este arquivo é responsável por processar os argumentos da linha de comando,
+ * inicializar o simulador, executar a simulação e imprimir o resultado final
+ * no formato solicitado (relatório para humanos ou JSON).
+ */
 
 #include <iostream>
 #include <fstream>
@@ -6,11 +13,30 @@
 #include "labirinto/Simulador.h"
 #include "utils/Logger.h"
 
+/**
+ * @struct ConfiguracaoSimulacao
+ * @brief Estrutura para manter as configurações da simulação.
+ * @note Atualmente não utilizada, mas preparada para futuras expansões.
+ */
 struct ConfiguracaoSimulacao {
     unsigned int seed = 1; 
     int chanceDeSobrevivencia = 1; 
 };
 
+/**
+ * @brief Função principal que executa o programa.
+ * @details
+ * 1.  Analisa os argumentos da linha de comando para obter o nome do arquivo do cenário
+ * e o modo de saída (`--human` ou `--json-only`).
+ * 2.  Configura o nível do Logger com base no modo de saída.
+ * 3.  Cria uma instância do `Simulador`.
+ * 4.  Carrega o arquivo de cenário.
+ * 5.  Executa a simulação com uma seed e chance de batalha fixas.
+ * 6.  Imprime o relatório final no formato apropriado.
+ * @param argc O número de argumentos da linha de comando.
+ * @param argv Um array de strings contendo os argumentos.
+ * @return `0` em caso de sucesso, `1` em caso de erro.
+ */
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::cerr << "Uso: " << argv[0] << " <arquivo> [--json-only | --human]" << std::endl;
