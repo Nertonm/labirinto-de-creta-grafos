@@ -116,7 +116,8 @@ int main(int argc, char* argv[]) {
                 if (u != -1) local = "Corredor " + std::to_string(u) + "–" + std::to_string(v);
             }
         }
-        Logger::printarLogsComProgresso(resultado.eventos, resultado.tempoEncontro, resultado.tipoEncontro, local);
+        // Passa tempoCorte = resultado.tempoReal para não imprimir progresso após o fim
+        Logger::printarLogsComProgresso(resultado.eventos, resultado.tempoReal, resultado.tempoEncontro, resultado.tipoEncontro, local);
         std::cout << std::endl;
     }
     // --- CABEÇALHO DO RELATÓRIO ---

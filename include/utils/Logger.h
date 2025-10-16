@@ -21,6 +21,7 @@
 #include <set>
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include "labirinto/Grafo.h" // Necessário para imprimir os vizinhos
 
 /**
@@ -151,6 +152,13 @@ public:
 
     // Versão estendida: permite destacar um encontro específico (tipo/tempo)
     static void printarLogsComProgresso(const std::vector<EventoMovimento>& eventos,
+                                        double tempoEncontro,
+                                        const std::string& tipoEncontro,
+                                        const std::string& localEncontro);
+
+    // Nova sobrecarga: permite informar um tempo de corte (fim da simulação)
+    static void printarLogsComProgresso(const std::vector<EventoMovimento>& eventos,
+                                        double tempoCorte,
                                         double tempoEncontro,
                                         const std::string& tipoEncontro,
                                         const std::string& localEncontro);
@@ -405,9 +413,19 @@ inline void Logger::printarLogsComProgresso(const std::vector<EventoMovimento>& 
                                             double tempoEncontro,
                                             const std::string& tipoEncontro,
                                             const std::string& localEncontro) {
-    // Imprime progresso limitado até o tempo do encontro (se houver)
+    // Encaminha para a sobrecarga com tempo de corte infinito (compatibilidade)
+    printarLogsComProgresso(eventos, std::numeric_limits<double>::infinity(), tempoEncontro, tipoEncontro, localEncontro);
+}
+
+inline void Logger::printarLogsComProgresso(const std::vector<EventoMovimento>& eventos,
+                                            double tempoCorte,
+                                            double tempoEncontro,
+                                            const std::string& tipoEncontro,
+                                            const std::string& localEncontro) {
+    // Imprime progresso limitado até o tempo do encontro (se houver) e/ou até o fim da simulação
     const int barraLen = 20;
-    const double tempoMax = (tempoEncontro >= 0) ? tempoEncontro : std::numeric_limits<double>::infinity();
+    const double tempoMaxEncontro = (tempoEncontro >= 0) ? tempoEncontro : std::numeric_limits<double>::infinity();
+    const double tempoMax = std::min(tempoCorte, tempoMaxEncontro);
 
     std::set<double> ticks;
     ticks.clear();

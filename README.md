@@ -11,6 +11,7 @@ Este projeto é uma simulação computacional baseada na lenda do Minotauro, imp
 - 5. [Testes Automatizados (CTest)](#5-testes-automatizados-ctest)
 - 6. [Dicas e Solução de Problemas](#6-dicas-e-solução-de-problemas)
 - 7. [Critérios de Avaliação — Mapeamento](#7-critérios-de-avaliação-—-mapeamento)
+- 8. [Créditos e Arte ASCII](#8-créditos-e-arte-ascii)
 - [Estrutura de Arquivos](#estrutura-de-arquivos)
 
 ## 1. Visão Geral e Cenário
@@ -266,6 +267,34 @@ O Minotauro é o predador perfeito: ele conhece tudo.
       * O sistema fornece relatórios ricos e em múltiplos formatos, facilitando a análise.
       * A dinâmica da simulação é altamente sensível à **calibragem dos parâmetros**. Cenários como `morte_fome` e `perseguicao_imediata` demonstram como o equilíbrio entre os recursos do prisioneiro, a percepção do Minotauro e a topologia do labirinto cria desafios completamente diferentes. A eficiência do algoritmo de backtracking do prisioneiro é testada em cenários como `beco_sem_saida`.
 
+### Complexidade do Movimento do Prisioneiro
+
+O prisioneiro utiliza uma busca em profundidade (DFS) com backtracking, guiada por restrição de recursos (kits) e memória dos vértices visitados.
+
+- Custo temporal por exploração: cada aresta é percorrida no máximo duas vezes (ida e volta), resultando em O(V + E) no pior caso para visitar todo o componente conexo alcançável com os kits disponíveis. Em cada passo, a decisão local examina vizinhos em O(grau(v)).
+- Memória: a estrutura de visitados, a pilha do `Novelo` e o caminho acumulado ocupam O(V). Operações de empilhar/desempilhar são O(1).
+- Pesos e tempo contínuo: os pesos das arestas determinam o tempo de travessia. O motor de eventos discretos avança diretamente para o instante de chegada, sem ticks; a contagem de eventos ainda é O(V + E) na exploração completa.
+- Restrição por kits: uma aresta de custo w só é considerada se houver kits suficientes. Isso efetivamente poda a DFS, podendo reduzir o espaço de busca. Em contrapartida, caminhos viáveis podem ser encontrados mais tarde via backtracking, mantendo a mesma ordem assintótica.
+- Efeitos de topologia: em grafos com alto grau médio, o custo por passo aumenta proporcionalmente ao grau do vértice corrente; já em grafos esparsos, a exploração aproxima-se do limite O(V + E).
+
+Observações:
+
+- A estratégia não é de caminho mínimo global; é uma exploração cega com retorno. Portanto, o trajeto real até a saída pode ser mais longo que o ótimo, embora o custo computacional permaneça linear na estrutura visitada.
+- A simulação termina em tempo finito: com memória perfeita, não há revisita de vértices sem necessidade; cada aresta é considerada número constante de vezes, e o backtracking esgota a pilha em O(V).
+
+### Complexidade do Movimento do Minotauro
+
+O Minotauro combina onisciência (pré-processamento) com dois modos de deslocamento (aleatório e perseguição):
+
+- Pré-processamento: executa Floyd–Warshall uma única vez para todas as fontes. Tempo O(V^3) e memória O(V^2) para as matrizes de distância `dist` e de próximo passo `prox`.
+- Consultas O(1):
+    - Percepção: checagem se `dist[M][P] <= raio` é O(1).
+    - Próximo passo na perseguição: `prox[u][v]` fornece o próximo vizinho em O(1), permitindo reconstrução do caminho curto aresta a aresta.
+- Movimento aleatório (fora da perseguição): seleção de vizinho em O(grau(v)); agendamento de chegada é O(1), com tempo igual ao peso da aresta (velocidade base).
+- Perseguição (velocidade dobrada): cada salto segue o caminho mínimo; o custo por evento permanece O(1), e o tempo real por aresta é metade do peso (2× a velocidade). O número de eventos até alcançar o prisioneiro é proporcional ao comprimento do caminho curto (em arestas).
+- Integração com o motor de eventos: criação/atualização de eventos de chegada é O(1); detecção de encontro em aresta usa aritmética de tempo contínuo constante.
+- Limitações práticas: por conta do O(V^3) e O(V^2), recomenda-se V na casa de centenas. Em grafos desconexos, `dist` pode ser infinito, impedindo detecção/perseguição entre componentes separados.
+
 ## 5. Testes Automatizados (CTest)
 
 Este repositório integra testes com o CTest. Para rodar os testes:
@@ -322,6 +351,14 @@ Assunções e limitações
 - Distâncias: pesos de arestas representam tempo e custo (kits) de forma linear.
 - Sementes: seed fixa (1) no `main`; pode ser exposta futuramente via CLI se necessário para estudos estatísticos.
  - Encontro em sala: se o prisioneiro vencer a batalha, o Minotauro morre e a simulação continua normalmente; o prisioneiro segue tentando escapar.
+
+## 8. Créditos e Arte ASCII
+
+A arte ASCII do Minotauro utilizada/referenciada neste projeto é creditada ao repositório público de ASCII Art:
+
+- "Minotaur" em ASCII Art Website: https://asciiart.website/art/2334
+
+Se você é o(a) autor(a) original e deseja uma atribuição diferente ou a remoção, abra uma issue para que possamos ajustar prontamente.
 
 ## Estrutura de Arquivos
 
