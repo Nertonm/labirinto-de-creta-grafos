@@ -1,6 +1,7 @@
 # Labirinto de Creta: Simulação de Fuga e Perseguição
 
 Este projeto é uma simulação computacional baseada na lenda do Minotauro, implementada em C++. Ele modela a dinâmica de um prisioneiro tentando escapar de um labirinto, representado como um grafo, enquanto é caçado por um Minotauro com conhecimento total do ambiente.
+Link do video: [https://youtu.be/P-v_R3yjBlI](https://www.youtube.com/watch?v=P-v_R3yjBlI)
 
 ## Sumário
 - 1. [Visão Geral e Cenário](#1-visão-geral-e-cenário)
