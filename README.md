@@ -20,7 +20,7 @@ Na mitologia, como punição por uma guerra perdida, Atenas enviava jovens a Cre
 ### Dinâmica do Desafio
 
   * **O Labirinto:** É modelado como um **grafo ponderado não-direcionado** `G = (V, E)`. Os vértices (`V`) são as salas e as arestas (`E`) são os corredores. O peso de cada aresta representa o tempo e o custo (em comida) para atravessá-la.
-  * **O Prisioneiro:** Começa em um vértice de entrada, não conhece o mapa e precisa encontrar a saída. Ele possui uma memória perfeita dos locais que visitou e um "novelo de lã" para fazer o caminho de volta (backtracking). Seus suprimentos são limitados, e o tempo é crucial.
+  * **O Prisioneiro:** Começa em um vértice de entrada, não conhece o mapa e precisa encontrar a saída. Ele possui um "novelo de lã" para fazer o caminho de volta (backtracking). Seus suprimentos são limitados, e o tempo é crucial para sua sobrevivencia.
   * **O Minotauro:** Conhece cada centímetro do labirinto. Ele vaga aleatoriamente até que o prisioneiro entre em seu raio de percepção. A partir desse momento, ele inicia uma perseguição implacável, movendo-se pelo caminho mais curto e com o dobro da velocidade.
 
 ### Representação e Entrada
