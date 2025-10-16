@@ -27,3 +27,9 @@ target_link_libraries(simulador PRIVATE labirinto_lib)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 message(STATUS "Projeto configurado. Para compilar, use 'make' (ou seu build tool).")
+
+# Testes (CTest)
+include(CTest)
+if (BUILD_TESTING)
+    add_subdirectory(tests)
+endif()

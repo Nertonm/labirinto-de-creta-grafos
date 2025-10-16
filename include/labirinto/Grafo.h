@@ -1,10 +1,10 @@
 /**
- * @file Grafo.cpp
+ * @file Grafo.h
  * @author Thiago Nerton
- * @brief Implementação da classe Grafo.
- * @details Este arquivo contém a lógica para construir e manipular a estrutura
- * de dados do grafo que representa o labirinto, incluindo a adição de arestas
- * e a consulta de vizinhos e pesos.
+ * @brief Definição da classe Grafo.
+ * @details Este arquivo contém a declaração da classe Grafo e suas interfaces
+ * para construir e manipular a estrutura de dados do labirinto, incluindo a
+ * adição de arestas e a consulta de vizinhos e pesos.
  */
 
 #pragma once // Diretiva padrão para evitar que o header seja incluído múltiplas vezes
