@@ -380,7 +380,7 @@ inline void Logger::printarLogsComProgresso(const std::vector<EventoMovimento>& 
                 std::cout << cor << "[TEMPO " << t << "] " << ev.agente
                           << " começou a ir de " << ev.origem << " para " << ev.destino
                           << " (peso: " << ev.peso << ")" << "\033[0m" << std::endl;
-                std::cout << "    Detalhes: origem=" << ev.origem << ", destino=" << ev.destino << ", peso=" << ev.peso << std::endl;
+                // std::cout << "    Detalhes: origem=" << ev.origem << ", destino=" << ev.destino << ", peso=" << ev.peso << std::endl;
                 iniciou.insert(&ev);
             }
         }
@@ -405,8 +405,80 @@ inline void Logger::printarLogsComProgresso(const std::vector<EventoMovimento>& 
                                             double tempoEncontro,
                                             const std::string& tipoEncontro,
                                             const std::string& localEncontro) {
-    // Reaproveita a impressão padrão
-    printarLogsComProgresso(eventos);
+    // Imprime progresso limitado até o tempo do encontro (se houver)
+    const int barraLen = 20;
+    const double tempoMax = (tempoEncontro >= 0) ? tempoEncontro : std::numeric_limits<double>::infinity();
+
+    std::set<double> ticks;
+    ticks.clear();
+    for (const auto& ev : eventos) {
+        if (ev.tempoInicio <= tempoMax) ticks.insert(ev.tempoInicio);
+        if (ev.tempoFim <= tempoMax) ticks.insert(ev.tempoFim);
+        // amostragem de progresso para animação, sem ultrapassar o encontro
+        double dur = ev.tempoFim - ev.tempoInicio;
+        if (dur <= 0) continue;
+        for (int i = 1; i < barraLen; ++i) {
+            double t = ev.tempoInicio + dur * (double(i) / barraLen);
+            if (t <= tempoMax + 1e-9) ticks.insert(t);
+        }
+    }
+    std::vector<double> tempoOrdenado(ticks.begin(), ticks.end());
+    std::set<const EventoMovimento*> iniciou;
+    std::set<const EventoMovimento*> chegou;
+
+    std::cout << std::fixed << std::setprecision(2);
+    auto get_delay_ms = []() -> int {
+        const char* v = std::getenv("LAB_ANIM_DELAY_MS");
+        if (!v) return 120;
+        try {
+            int ms = std::stoi(v);
+            if (ms < 0) ms = 0;
+            if (ms > 2000) ms = 2000;
+            return ms;
+        } catch (...) { return 120; }
+    };
+    const int delay_ms = get_delay_ms();
+
+    for (double t : tempoOrdenado) {
+        if (t > tempoMax + 1e-9) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
+
+        // 1) Chegadas neste tempo (apenas se a chegada ocorrer antes do encontro)
+        for (const auto& ev : eventos) {
+            if (ev.tempoFim <= tempoMax + 1e-9 && std::abs(ev.tempoFim - t) < 1e-9 && !chegou.count(&ev)) {
+                const char* cor = (ev.agente == "Minotauro") ? "\033[38;5;94m" : "\033[1;32m";
+                std::cout << cor << "[TEMPO " << t << "] " << ev.agente << " chegou em " << ev.destino << "\033[0m" << std::endl;
+                chegou.insert(&ev);
+            }
+        }
+
+        // 2) Inícios neste tempo (desde que antes do encontro)
+        for (const auto& ev : eventos) {
+            if (ev.tempoInicio <= tempoMax + 1e-9 && std::abs(ev.tempoInicio - t) < 1e-9 && !iniciou.count(&ev)) {
+                const char* cor = (ev.agente == "Minotauro") ? "\033[38;5;94m" : "\033[1;32m";
+                std::cout << cor << "[TEMPO " << t << "] " << ev.agente
+                          << " começou a ir de " << ev.origem << " para " << ev.destino
+                          << " (peso: " << ev.peso << ")" << "\033[0m" << std::endl;
+               // std::cout << "    Detalhes: origem=" << ev.origem << ", destino=" << ev.destino << ", peso=" << ev.peso << std::endl;
+                iniciou.insert(&ev);
+            }
+        }
+
+        // 3) Progresso para todos em trânsito neste tempo (cortado no encontro)
+        for (const auto& ev : eventos) {
+            double fimConsiderado = std::min(ev.tempoFim, tempoMax);
+            if (t + 1e-9 >= ev.tempoInicio && t <= fimConsiderado + 1e-9) {
+                double dur = ev.tempoFim - ev.tempoInicio;
+                double frac = (dur > 0) ? std::clamp((t - ev.tempoInicio) / dur, 0.0, 1.0) : 1.0;
+                int filled = (int)std::round(frac * barraLen);
+                int porcento = (int)std::round(frac * 100.0);
+                const char* cor = (ev.agente == "Minotauro") ? "\033[38;5;94m" : "\033[1;32m";
+                std::cout << cor << "[TEMPO " << t << "] " << ev.agente << " progresso: [";
+                for (int b = 0; b < barraLen; ++b) std::cout << (b < filled ? '#' : '-');
+                std::cout << "] " << porcento << "%\033[0m" << std::endl;
+            }
+        }
+    }
 
     // Destaque do encontro, se houver
     if (tempoEncontro >= 0) {

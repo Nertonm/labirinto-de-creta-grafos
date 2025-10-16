@@ -129,6 +129,9 @@ Simulador::ResultadoSimulacao Simulador::run(unsigned int seed, int chanceBatalh
     // Inicializa os agentes
     Prisioneiro p(vEntr, kitsDeComida);
     Minotauro m(posIniM, percepcaoMinotauro, labirinto, labirinto.getNumVertices());
+    // Inclui posição inicial do Minotauro no rastro para exibição consistente
+    resultado.caminhoM.clear();
+    resultado.caminhoM.push_back(m.getPos());
 
     // Minotauro lembra os caminhos mínimos entre todos os pares de vértices
     m.lembrarCaminhos();
@@ -264,8 +267,8 @@ void Simulador::turnoPrisioneiro(Prisioneiro& p){
     int pos_antiga = p.getPos();
     const auto& vizinhos = labirinto.get_vizinhos(p.getPos());
     int custoMovimento = p.mover(vizinhos);
-    Logger::info(tempoGlobal, "Prisioneiro começando a se mover da sala {} para {}. Custo: {} kits de comida.", Logger::LogSource::PRISIONEIRO, pos_antiga, p.getPos(), custoMovimento);
     if (custoMovimento > 0){
+        Logger::info(tempoGlobal, "Prisioneiro começando a se mover da sala {} para {}. Custo: {} kits de comida.", Logger::LogSource::PRISIONEIRO, pos_antiga, p.getPos(), custoMovimento);
         prxMovP = tempoGlobal + custoMovimento;
     inicioMovP = tempoGlobal;
     destAtualP = p.getPos();
@@ -358,6 +361,12 @@ int Simulador::turnoMinotauro(Minotauro& m, int posPrisioneiro, std::mt19937& ge
         inicioMovM = tempoGlobal;
         destAtualM = proximoPasso;
     resultado.eventos.push_back(Logger::EventoMovimento{tempoGlobal, prxMovM, "Minotauro", posAntiga, destAtualM, static_cast<int>(pesoAresta)});
+    } else {
+        // Sem vizinhos ou sem movimento: agenda avanço de tempo para evitar loop em t == tempoGlobal
+        prxMovM = tempoGlobal + 1.0;
+        inicioMovM = tempoGlobal;
+        destAtualM = proximoPasso; // permanece na mesma sala
+        resultado.eventos.push_back(Logger::EventoMovimento{tempoGlobal, prxMovM, "Minotauro", posAntiga, destAtualM, 1});
     }
     return 1;
 }

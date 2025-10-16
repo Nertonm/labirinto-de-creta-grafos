@@ -1,12 +1,13 @@
+7
 6
-5
 0 1 1
 1 2 2
 2 3 2
 1 4 1
 4 5 1
+5 6 1   # minicomponente do minotauro
 0
 3
-3
-3
-15
+5   # minotauro no vértice 5
+0   # percepção nula
+15  # comida

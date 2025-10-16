@@ -1,20 +1,11 @@
-10      # Numero de Vértices
-13      # Numero de Arestas
-0 1 5
-0 2 6
-1 3 5
-2 4 7
-3 5 4
-4 6 8
-5 7 3
-6 8 5
-7 9 6
-8 9 4
-1 4 3
-3 6 4
-5 8 2
+7       # Numero de Vértices
+4       # Numero de Arestas
+0 1 2
+1 2 2
+2 3 2    # soma total = 6
+5 6 1    # subgrafo do minotauro, desconectado
 0       # Vértice de entrada
-9       # Vértice de saída (bem distante)
-5       # Posição inicial do Minotauro
-10      # Percepção do Minotauro
-15      # Comida (muito pouca, o caminho mínimo custa bem mais)
+4       # Vértice de saída (inacessível)
+5       # Posição inicial do Minotauro (em subgrafo separado)
+0       # Percepção do Minotauro (nula)
+6       # Comida (morre de fome ao chegar na sala 3)

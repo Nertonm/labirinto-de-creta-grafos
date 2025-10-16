@@ -10,8 +10,20 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
+#include <iomanip>
 #include "labirinto/Simulador.h"
 #include "utils/Logger.h"
+
+// Cores ANSI locais para relatórios humanos (mantém compatível com Logger)
+// Evita depender de símbolos internos de Logger.
+static constexpr const char* RESET_COLOR   = "\033[0m";
+static constexpr const char* BOLD          = "\033[1m";
+static constexpr const char* BRONZE        = "\033[38;5;172m";
+static constexpr const char* STONE         = "\033[38;5;242m";
+static constexpr const char* STONE_DARK    = "\033[38;5;238m";
+static constexpr const char* GREEN_INFO    = "\033[1;32m";
+static constexpr const char* RED_HIGHLIGHT = "\033[1;31m";
 
 /**
  * @struct ConfiguracaoSimulacao
@@ -39,17 +51,20 @@ struct ConfiguracaoSimulacao {
  */
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cerr << "Uso: " << argv[0] << " <arquivo> [--json-only | --human]" << std::endl;
+        std::cerr << "Uso: " << argv[0] << " <arquivo> [--json-only|--human] [--no-progress]" << std::endl;
         return 1;
     }
     // Nome do arquivo passado como argumento
     std::string nomeArquivo = argv[1];
     bool jsonOnly = false;
     bool humanReport = true; // padrão
-    if (argc >= 3) {
-        std::string flag = argv[2];
+    bool showProgress = true; // novo: controlar logs de progresso
+    // Parseia múltiplas flags opcionais a partir do 2º argumento
+    for (int i = 2; i < argc; ++i) {
+        std::string flag = argv[i];
         if (flag == "--json-only") { jsonOnly = true; humanReport = false; }
         else if (flag == "--human") { humanReport = true; jsonOnly = false; }
+        else if (flag == "--no-progress") { showProgress = false; }
     }
 
     // Definir nível de log conforme modo selecionado antes de qualquer log
@@ -82,55 +97,96 @@ int main(int argc, char* argv[]) {
         Simulador::ResultadoSimulacao resultado = simulation.run(1, 1); // Seed 1, Chance 1%
 
     if (humanReport && !jsonOnly) {
-            // RELATÓRIO HUMANO COM DESTAQUE
-            std::cout << "\n\n";
-            std::cout << "======================================================\n";
-            std::cout << "             RELATÓRIO FINAL DA SIMULAÇÃO             \n";
-            std::cout << "======================================================\n";
-            std::cout << "  Resultado: " << (resultado.prisioneiroSobreviveu ? "Sim" : "Não")
-                      << "  Motivo: " << (resultado.motivoFim.empty() ? (resultado.prisioneiroSobreviveu ? "O prisioneiro escapou com sucesso!" : "") : resultado.motivoFim) << "\n";
-            std::cout << "------------------------------------------------------\n";
-            std::cout << "  Tempo total de sobrevivência: " << resultado.diasSobrevividos << " unidades de tempo\n";
-            std::cout << "  Kits de comida restantes: " << resultado.kitsRestantes << "\n";
-            std::cout << "  Minotauro sobreviveu: " << (resultado.minotauroVivo ? "Sim" : "Não") << "\n";
-            if (resultado.tempoEncontro >= 0) {
-                std::cout << "  Encontro: sim (tipo: " << resultado.tipoEncontro << ", t=" << std::fixed << std::setprecision(2) << resultado.tempoEncontro << ")\n";
-            } else {
-                std::cout << "  Encontro: não\n";
-            }
-            std::cout << "------------------------------------------------------\n";
-            // Caminhos
-            std::cout << "  Caminho do Prisioneiro: ";
-            for (size_t i = 0; i < resultado.caminhoP.size(); ++i) {
-                std::cout << resultado.caminhoP[i];
-                if (i + 1 < resultado.caminhoP.size()) std::cout << " -> ";
-            }
-            std::cout << "\n";
-            std::cout << "  Caminho do Minotauro: ";
-            for (size_t i = 0; i < resultado.caminhoM.size(); ++i) {
-                std::cout << resultado.caminhoM[i];
-                if (i + 1 < resultado.caminhoM.size()) std::cout << " -> ";
-            }
-            std::cout << "\n";
-            std::cout << "------------------------------------------------------\n";
-            // Linha do tempo com barras e destaque de encontro
-            if (!resultado.eventos.empty()) {
-                std::string local;
-                if (resultado.tempoEncontro >= 0) {
-                    if (resultado.tipoEncontro == "sala") {
-                        local = "Sala " + std::to_string(resultado.posFinalP);
-                    } else if (resultado.tipoEncontro == "aresta" && !resultado.eventos.empty()) {
-                        // usar último par de movimentos em conflito como contexto simples
-                        // nota: para precisão, o simulador poderia preencher explicitamente origem/destino do encontro
-                        int u = resultado.eventos.back().origem;
-                        int v = resultado.eventos.back().destino;
-                        local = "Corredor " + std::to_string(u) + "–" + std::to_string(v);
+    // --- LINHA DO TEMPO DETALHADA (ANTES DO RELATÓRIO FINAL) ---
+    if (showProgress && !resultado.eventos.empty()) {
+        std::cout << BRONZE << "\n  ⏳ " << BOLD << "Linha do Tempo dos Eventos" << RESET_COLOR << std::endl;
+        std::string local;
+        if (resultado.tempoEncontro >= 0) {
+            if (resultado.tipoEncontro == "sala") {
+                local = "Sala " + std::to_string(resultado.posFinalP);
+            } else if (resultado.tipoEncontro == "aresta" && !resultado.eventos.empty()) {
+                int u = -1, v = -1;
+                for(const auto& ev : resultado.eventos) {
+                    if (ev.agente == "Prisioneiro" && resultado.tempoEncontro >= ev.tempoInicio && resultado.tempoEncontro <= ev.tempoFim) {
+                        u = ev.origem;
+                        v = ev.destino;
+                        break;
                     }
                 }
-                Logger::printarLogsComProgresso(resultado.eventos, resultado.tempoEncontro, resultado.tipoEncontro, local);
+                if (u != -1) local = "Corredor " + std::to_string(u) + "–" + std::to_string(v);
             }
-            std::cout << "======================================================\n";
         }
+        Logger::printarLogsComProgresso(resultado.eventos, resultado.tempoEncontro, resultado.tipoEncontro, local);
+        std::cout << std::endl;
+    }
+    // --- CABEÇALHO DO RELATÓRIO ---
+    std::cout << "\n\n";
+    std::cout << "          " << BOLD << BRONZE << "╔═════════════════════════════════════════════╗" << RESET_COLOR << std::endl;
+    std::cout << "          " << BOLD << BRONZE << "║" << RESET_COLOR << "       " << BOLD << "O FIM DA JORNADA NO LABIRINTO" << RESET_COLOR << "        " << BOLD << BRONZE << "║" << RESET_COLOR << std::endl;
+    std::cout << "          " << BOLD << BRONZE << "╚═════════════════════════════════════════════╝" << RESET_COLOR << std::endl;
+    std::cout << "\n";
+
+    // --- DESFECHO ---
+    std::cout << STONE << "  " << BOLD << "Desfecho: " << RESET_COLOR;
+    if (resultado.prisioneiroSobreviveu) {
+        std::cout << GREEN_INFO << "O Prisioneiro Escapou!" << RESET_COLOR << std::endl;
+    } else {
+        std::cout << RED_HIGHLIGHT << "O Prisioneiro Pereceu." << RESET_COLOR << std::endl;
+    }
+    std::cout << STONE << "  " << BOLD << "Motivo:   " << RESET_COLOR << resultado.motivoFim << std::endl;
+    std::cout << "\n";
+    
+    // --- ESTATÍSTICAS DA JORNADA ---
+    std::cout << BRONZE << "  ⚜ " << BOLD << "Estatísticas da Jornada" << RESET_COLOR << std::endl;
+    std::cout << STONE_DARK << "  ----------------------------------------------------" << RESET_COLOR << std::endl;
+    std::cout << "  " << BOLD << "Tempo de Sobrevivência: " << RESET_COLOR << resultado.diasSobrevividos << " unidades de tempo" << std::endl;
+    std::cout << "  " << BOLD << "Provisões Restantes:    " << RESET_COLOR << resultado.kitsRestantes << " kits de comida" << std::endl;
+    std::cout << "  " << BOLD << "Posição Final (P):      " << RESET_COLOR << "Sala " << resultado.posFinalP << std::endl;
+    std::cout << "  " << BOLD << "Posição Final (M):      " << RESET_COLOR << "Sala " << resultado.posFinalM << std::endl;
+    std::cout << STONE_DARK << "  ----------------------------------------------------" << RESET_COLOR << std::endl;
+
+    // --- DESTAQUES ---
+    std::cout << BRONZE << "\n  ⚔ " << BOLD << "Destaques da Jornada" << RESET_COLOR << std::endl;
+    std::cout << STONE_DARK << "  ----------------------------------------------------" << RESET_COLOR << std::endl;
+    if (resultado.tempoEncontro >= 0) {
+        std::cout << "  " << BOLD << "Confronto Decisivo: " << RED_HIGHLIGHT << "Sim" << RESET_COLOR << std::endl;
+        std::cout << "    " << BOLD << "Momento do Encontro: " << RESET_COLOR << std::fixed << std::setprecision(2) << resultado.tempoEncontro << " unidades de tempo" << std::endl;
+        std::cout << "    " << BOLD << "Tipo de Encontro:    " << RESET_COLOR << "Em uma " << resultado.tipoEncontro << std::endl;
+    } else {
+        std::cout << "  " << BOLD << "Confronto Decisivo: " << GREEN_INFO << "Não" << RESET_COLOR << ". O Minotauro nunca encontrou sua presa." << std::endl;
+    }
+    std::cout << "  " << BOLD << "Destino do Minotauro: ";
+    if (resultado.minotauroVivo) {
+        std::cout << "Sobreviveu";
+    } else {
+        std::cout << RED_HIGHLIGHT << "Derrotado em combate" << RESET_COLOR;
+    }
+    std::cout << std::endl;
+    std::cout << STONE_DARK << "  ----------------------------------------------------" << RESET_COLOR << std::endl;
+
+
+    // --- CAMINHOS PERCORRIDOS ---
+    auto print_caminho = [](const std::string& nome, const std::vector<int>& caminho) {
+        std::cout << BRONZE << "\n  📜 " << BOLD << "O Rastro de " << nome << RESET_COLOR << std::endl;
+        if (caminho.empty()) {
+            std::cout << STONE << "     Nenhum passo significativo foi dado." << RESET_COLOR << std::endl;
+            return;
+        }
+        std::cout << "     ";
+        for (size_t i = 0; i < caminho.size(); ++i) {
+            std::cout << BOLD << "Sala " << caminho[i] << RESET_COLOR;
+            if (i < caminho.size() - 1) {
+                std::cout << STONE << " → " << RESET_COLOR;
+            }
+        }
+        std::cout << std::endl;
+    };
+    
+    print_caminho("Prisioneiro", resultado.caminhoP);
+    print_caminho("Minotauro", resultado.caminhoM);
+
+    std::cout << "\n" << BOLD << BRONZE << "========================================================" << RESET_COLOR << std::endl;
+}
 
         // JSON resumido (somente se solicitado explicitamente ou padrão se jsonOnly)
     if (jsonOnly) {
